@@ -3,7 +3,15 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   name: String,
   email: String,
-  password: String
+  password: String,
+
+  // 🔐 Email reset (link-based)
+  resetToken: String,
+  resetTokenExpiry: Date,
+
+  // 🔐 OTP-based reset
+  otp: String,
+  otpExpiry: Date
 });
 
 module.exports = mongoose.model('User', userSchema);
