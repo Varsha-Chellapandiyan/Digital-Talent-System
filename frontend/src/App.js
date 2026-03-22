@@ -1,5 +1,7 @@
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import OtpReset from "./pages/OtpReset";
 import { useState } from "react";
 
 function App() {
@@ -7,11 +9,10 @@ function App() {
 
   return (
     <div>
-      {page === "login" ? (
-        <Login setPage={setPage} />
-      ) : (
-        <Register setPage={setPage} />
-      )}
+      {page === "login" && <Login setPage={setPage} />}
+      {page === "register" && <Register setPage={setPage} />}
+      {page === "forgot" && <ForgotPassword setPage={setPage} />}
+      {page === "otp" && <OtpReset setPage={setPage} />}
     </div>
   );
 }

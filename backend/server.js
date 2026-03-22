@@ -1,26 +1,32 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+require("dotenv").config();
 
-const connectDB = require('./config/db');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// ✅ Middleware
 app.use(express.json());
+app.use(cors());
 
-// Connect Database
-connectDB();
+// ✅ LOAD AUTH ROUTES (VERY IMPORTANT)
+console.log("Loading auth routes...");
+const authRoutes = require("./routes/auth");
+app.use("/api/auth", authRoutes);
 
-// Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api', require('./routes/protected'));
-// Test route
-app.get('/', (req, res) => res.send('API running'));
+// ✅ TEST ROUTE
+app.get("/api/test", (req, res) => {
+  console.log("✅ API TEST HIT");
+  res.send("API TEST WORKING ✅");
+});
 
-// Start server
-app.listen(5000, () => console.log('Server started'));
-app.get('/api/check', (req, res) => {
-  res.send("Working");
+// ✅ DATABASE CONNECTION
+mongoose.connect("mongodb://127.0.0.1:27017/myapp")
+  .then(() => console.log("MongoDB connected ✅"))
+  .catch(err => console.log("DB ERROR:", err.message));
+
+// ✅ SERVER START
+app.listen(4000, () => {
+  console.log("🚀 Server running on http://localhost:4000");
 });

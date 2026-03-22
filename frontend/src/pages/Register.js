@@ -10,7 +10,6 @@ function Register({ setPage }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // ✅ SEPARATE STATES
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -20,6 +19,7 @@ function Register({ setPage }) {
     setError("");
     setSuccess("");
 
+    // ✅ VALIDATIONS
     if (!name || !email || !password || !confirmPassword) {
       setError("All fields are required");
       return;
@@ -44,24 +44,40 @@ function Register({ setPage }) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch("http://localhost:4000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          password: password.trim()
+        })
       });
 
-      const data = await res.json();
+      // 🔥 VERY IMPORTANT (fix JSON error)
+      const text = await res.text();
+      console.log("RAW RESPONSE:", text);
 
-      if (!res.ok) {
-        setError(data.message || "Registration failed");
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setError("Server returned invalid response ❌");
         setLoading(false);
         return;
       }
 
-      setSuccess("Registered successfully!");
+      if (!res.ok) {
+        setError(data.msg || "Registration failed");
+        setLoading(false);
+        return;
+      }
 
+      setSuccess(data.msg || "Registered successfully ✅");
+
+      // ✅ CLEAR FIELDS
       setName("");
       setEmail("");
       setPassword("");
@@ -71,9 +87,9 @@ function Register({ setPage }) {
         setPage("login");
       }, 1500);
 
-    } catch (error) {
-      console.error("Register Error:", error);
-      setError("Something went wrong. Try again.");
+    } catch (err) {
+      console.error("REGISTER ERROR:", err);
+      setError("Server not reachable ❌");
     }
 
     setLoading(false);
@@ -170,6 +186,7 @@ function Register({ setPage }) {
 
 export default Register;
 
+// 🎨 STYLES (same as yours)
 const styles = {
   container: {
     height: "100vh",

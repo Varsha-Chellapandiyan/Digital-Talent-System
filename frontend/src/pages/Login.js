@@ -8,7 +8,6 @@ function Login({ setPage }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // ✅ Separate eye state
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
@@ -17,7 +16,7 @@ function Login({ setPage }) {
     setError("");
     setSuccess("");
 
-    // ✅ Validation
+    // ✅ VALIDATION
     if (!email || !password) {
       setError("Please fill all fields");
       return;
@@ -32,34 +31,54 @@ function Login({ setPage }) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch("http://localhost:4000/api/auth/login", { // ✅ FIXED PORT
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim()
+        })
       });
 
-      const data = await res.json();
+      // 🔥 SAFE RESPONSE HANDLING
+      const text = await res.text();
+      console.log("LOGIN RAW:", text);
 
-      if (!res.ok) {
-        setError(data.message || "Login failed");
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setError("Invalid server response ❌");
         setLoading(false);
         return;
       }
 
-      // ✅ Save token
-      localStorage.setItem("token", data.token);
+      if (!res.ok) {
+        setError(data.msg || "Login failed");
+        setLoading(false);
+        return;
+      }
 
-      setSuccess("Login successful!");
+      // ✅ STORE TOKEN IF EXISTS
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
 
-      // clear fields
+      setSuccess(data.msg || "Login successful ✅");
+
       setEmail("");
       setPassword("");
 
+      // 👉 OPTIONAL REDIRECT
+      setTimeout(() => {
+        alert("Login Success 🎉");
+      }, 1000);
+
     } catch (error) {
       console.error("Login Error:", error);
-      setError("Something went wrong. Try again.");
+      setError("Server not reachable ❌");
     }
 
     setLoading(false);
@@ -70,7 +89,6 @@ function Login({ setPage }) {
       <div style={styles.card}>
         <h2 style={styles.title}>Welcome Back</h2>
 
-        {/* ERROR & SUCCESS */}
         {error && <p style={styles.error}>{error}</p>}
         {success && <p style={styles.success}>{success}</p>}
 
@@ -85,7 +103,6 @@ function Login({ setPage }) {
           }}
         />
 
-        {/* PASSWORD WITH EYE */}
         <div style={styles.inputWrapper}>
           <input
             style={styles.input}
@@ -116,6 +133,10 @@ function Login({ setPage }) {
           {loading ? "Logging in..." : "Login"}
         </button>
 
+        <p style={styles.forgot} onClick={() => setPage("forgot")}>
+          Forgot Password?
+        </p>
+
         <p style={styles.text}>
           Don’t have an account?{" "}
           <span style={styles.link} onClick={() => setPage("register")}>
@@ -129,13 +150,14 @@ function Login({ setPage }) {
 
 export default Login;
 
+// 🎨 STYLES
 const styles = {
   container: {
     height: "100vh",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "linear-gradient(to right, #232526, #414345)" // ✅ same as register
+    background: "linear-gradient(to right, #232526, #414345)"
   },
   card: {
     width: "350px",
@@ -180,6 +202,13 @@ const styles = {
     cursor: "pointer",
     fontWeight: "bold"
   },
+  forgot: {
+    marginTop: "10px",
+    textAlign: "right",
+    color: "#007bff",
+    cursor: "pointer",
+    fontSize: "13px"
+  },
   text: {
     marginTop: "15px",
     textAlign: "center",
@@ -201,7 +230,7 @@ const styles = {
   },
   success: {
     background: "#e6ffe6",
-    color: "#5c9412",
+    color: "#2e7d32",
     padding: "8px",
     borderRadius: "5px",
     marginBottom: "10px",
