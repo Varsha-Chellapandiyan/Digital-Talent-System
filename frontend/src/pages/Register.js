@@ -1,17 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function Register({ setPage }) {
+function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const navigate = useNavigate(); // ✅ NEW
 
   const handleRegister = async () => {
     if (loading) return;
@@ -44,7 +47,7 @@ function Register({ setPage }) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/register", {
+      const res = await fetch("http://192.168.2.75:4000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -56,35 +59,35 @@ function Register({ setPage }) {
         })
       });
 
-      // 🔥 VERY IMPORTANT (fix JSON error)
       const text = await res.text();
-      console.log("RAW RESPONSE:", text);
+      console.log("REGISTER RAW:", text);
 
       let data;
       try {
         data = JSON.parse(text);
       } catch {
-        setError("Server returned invalid response ❌");
+        setError("Invalid server response ❌");
         setLoading(false);
         return;
       }
 
       if (!res.ok) {
-        setError(data.msg || "Registration failed");
+        setError(data.msg || "Registration failed ❌");
         setLoading(false);
         return;
       }
 
       setSuccess(data.msg || "Registered successfully ✅");
 
-      // ✅ CLEAR FIELDS
+      // ✅ CLEAR FORM
       setName("");
       setEmail("");
       setPassword("");
       setConfirmPassword("");
 
+      // ✅ REDIRECT TO LOGIN
       setTimeout(() => {
-        setPage("login");
+        navigate("/login");
       }, 1500);
 
     } catch (err) {
@@ -149,9 +152,7 @@ function Register({ setPage }) {
           />
           <span
             style={styles.eye}
-            onClick={() =>
-              setShowConfirmPassword(!showConfirmPassword)
-            }
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           >
             {showConfirmPassword ? "👁️" : "🙈"}
           </span>
@@ -175,7 +176,7 @@ function Register({ setPage }) {
 
         <p style={styles.text}>
           Already have an account?{" "}
-          <span style={styles.link} onClick={() => setPage("login")}>
+          <span style={styles.link} onClick={() => navigate("/login")}>
             Login
           </span>
         </p>
@@ -186,7 +187,7 @@ function Register({ setPage }) {
 
 export default Register;
 
-// 🎨 STYLES (same as yours)
+// 🎨 STYLES
 const styles = {
   container: {
     height: "100vh",

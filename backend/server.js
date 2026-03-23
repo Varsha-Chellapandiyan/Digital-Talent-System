@@ -10,23 +10,27 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// ✅ LOAD AUTH ROUTES (VERY IMPORTANT)
-console.log("Loading auth routes...");
+// ✅ DEBUG LOGGER (VERY IMPORTANT)
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.url}`);
+  next();
+});
+
+// ✅ ROUTES
 const authRoutes = require("./routes/auth");
 app.use("/api/auth", authRoutes);
 
-// ✅ TEST ROUTE
-app.get("/api/test", (req, res) => {
-  console.log("✅ API TEST HIT");
-  res.send("API TEST WORKING ✅");
+// ✅ ROOT TEST
+app.get("/", (req, res) => {
+  res.send("Server running ✅");
 });
 
-// ✅ DATABASE CONNECTION
+// ✅ DATABASE
 mongoose.connect("mongodb://127.0.0.1:27017/myapp")
   .then(() => console.log("MongoDB connected ✅"))
-  .catch(err => console.log("DB ERROR:", err.message));
+  .catch(err => console.log("DB ERROR:", err));
 
-// ✅ SERVER START
-app.listen(4000, () => {
+// ✅ START SERVER
+app.listen(4000, "0.0.0.0", () => {
   console.log("🚀 Server running on http://localhost:4000");
 });

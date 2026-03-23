@@ -1,17 +1,33 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function Login({ setPage }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function Login() {
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    email: "",
+    password: ""
+  });
+
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
 
+  // ✅ HANDLE INPUT
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setError("");
+  };
+
+  // ✅ LOGIN FUNCTION
   const handleLogin = async () => {
+    console.log("🔥 Login button clicked");
+
     if (loading) return;
+
+    const { email, password } = form;
 
     setError("");
     setSuccess("");
@@ -31,7 +47,9 @@ function Login({ setPage }) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/login", { // ✅ FIXED PORT
+      console.log("📡 Sending request...");
+
+      const res = await fetch("http://192.168.2.75:4000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -42,42 +60,35 @@ function Login({ setPage }) {
         })
       });
 
-      // 🔥 SAFE RESPONSE HANDLING
-      const text = await res.text();
-      console.log("LOGIN RAW:", text);
-
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        setError("Invalid server response ❌");
-        setLoading(false);
-        return;
-      }
+      const data = await res.json();
+      console.log("✅ LOGIN RESPONSE:", data);
 
       if (!res.ok) {
-        setError(data.msg || "Login failed");
+        setError(data.msg || "Login failed ❌");
         setLoading(false);
         return;
       }
 
-      // ✅ STORE TOKEN IF EXISTS
+      // ✅ SAVE TOKEN
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
 
-      setSuccess(data.msg || "Login successful ✅");
+      setSuccess("Login successful ✅");
 
-      setEmail("");
-      setPassword("");
+      // ✅ CLEAR FORM
+      setForm({
+        email: "",
+        password: ""
+      });
 
-      // 👉 OPTIONAL REDIRECT
+      // ✅ REDIRECT (optional)
       setTimeout(() => {
         alert("Login Success 🎉");
       }, 1000);
 
-    } catch (error) {
-      console.error("Login Error:", error);
+    } catch (err) {
+      console.error("❌ LOGIN ERROR:", err);
       setError("Server not reachable ❌");
     }
 
@@ -93,26 +104,22 @@ function Login({ setPage }) {
         {success && <p style={styles.success}>{success}</p>}
 
         <input
+          name="email"
           style={styles.input}
           type="email"
           placeholder="Enter your email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setError("");
-          }}
+          value={form.email}
+          onChange={handleChange}
         />
 
         <div style={styles.inputWrapper}>
           <input
+            name="password"
             style={styles.input}
             type={showPassword ? "text" : "password"}
             placeholder="Enter password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError("");
-            }}
+            value={form.password}
+            onChange={handleChange}
           />
           <span
             style={styles.eye}
@@ -125,21 +132,21 @@ function Login({ setPage }) {
         <button
           style={{
             ...styles.button,
-            opacity: loading || !email || !password ? 0.7 : 1
+            opacity: loading || !form.email || !form.password ? 0.7 : 1
           }}
           onClick={handleLogin}
-          disabled={loading || !email || !password}
+          disabled={loading || !form.email || !form.password}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <p style={styles.forgot} onClick={() => setPage("forgot")}>
+        <p style={styles.forgot} onClick={() => navigate("/forgot")}>
           Forgot Password?
         </p>
 
         <p style={styles.text}>
           Don’t have an account?{" "}
-          <span style={styles.link} onClick={() => setPage("register")}>
+          <span style={styles.link} onClick={() => navigate("/")}>
             Register
           </span>
         </p>
@@ -164,28 +171,21 @@ const styles = {
     padding: "30px",
     borderRadius: "12px",
     background: "#fff",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
-    display: "flex",
-    flexDirection: "column"
+    boxShadow: "0 8px 20px rgba(0,0,0,0.2)"
   },
   title: {
     textAlign: "center",
-    marginBottom: "15px",
-    color: "#333",
-    fontWeight: "600"
+    marginBottom: "15px"
   },
   input: {
-    width: "100%",
+    width: "94%",
     padding: "10px",
-    marginBottom: "12px",
+    marginBottom: "10px",
     borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "14px",
-    boxSizing: "border-box"
+    border: "1px solid #ccc"
   },
   inputWrapper: {
-    position: "relative",
-    width: "100%"
+    position: "relative"
   },
   eye: {
     position: "absolute",
@@ -194,13 +194,13 @@ const styles = {
     cursor: "pointer"
   },
   button: {
+    width: "100%",
     padding: "10px",
     background: "#5c9412",
     color: "#fff",
     border: "none",
     borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "bold"
+    cursor: "pointer"
   },
   forgot: {
     marginTop: "10px",
@@ -211,8 +211,7 @@ const styles = {
   },
   text: {
     marginTop: "15px",
-    textAlign: "center",
-    fontSize: "14px"
+    textAlign: "center"
   },
   link: {
     color: "#5c9412",
@@ -225,8 +224,7 @@ const styles = {
     padding: "8px",
     borderRadius: "5px",
     marginBottom: "10px",
-    textAlign: "center",
-    fontSize: "13px"
+    textAlign: "center"
   },
   success: {
     background: "#e6ffe6",
@@ -234,7 +232,6 @@ const styles = {
     padding: "8px",
     borderRadius: "5px",
     marginBottom: "10px",
-    textAlign: "center",
-    fontSize: "13px"
+    textAlign: "center"
   }
 };

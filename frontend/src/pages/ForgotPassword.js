@@ -1,17 +1,26 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function ForgotPassword({ setPage }) {
+function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
-  // 🔹 EMAIL RESET (FINAL)
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+
+  const navigate = useNavigate();
+
+  // ✅ EMAIL RESET
   const handleEmail = async () => {
-    console.log("Forgot password clicked");
+    if (emailLoading) return;
 
     if (!email) {
       setMessage("Please enter email ❗");
       return;
     }
+
+    setEmailLoading(true);
+    setMessage("");
 
     try {
       const res = await fetch("http://localhost:4000/api/auth/forgot-password", {
@@ -23,31 +32,37 @@ function ForgotPassword({ setPage }) {
       });
 
       const data = await res.json();
-      console.log("FORGOT RESPONSE:", data);
 
       if (!res.ok) {
         setMessage(data.msg || "Something went wrong ❌");
+        setEmailLoading(false);
         return;
       }
 
-      setMessage(data.msg || "Reset link sent to email ✅");
+      setMessage("📩 Reset link sent! Check your email");
 
     } catch (err) {
-      console.error("FETCH ERROR:", err);
+      console.error(err);
       setMessage("Server not reachable ❌");
     }
+
+    setEmailLoading(false);
   };
 
-  // 🔹 OTP RESET
+  // ✅ OTP RESET
   const handleOtp = async () => {
-    console.log("OTP Button clicked");
+    if (otpLoading) return;
 
     if (!email) {
       setMessage("Please enter email ❗");
       return;
     }
 
+    setOtpLoading(true);
+    setMessage("");
+
     try {
+      localStorage.setItem("resetEmail", email);
       const res = await fetch("http://localhost:4000/api/auth/send-otp", {
         method: "POST",
         headers: {
@@ -57,22 +72,25 @@ function ForgotPassword({ setPage }) {
       });
 
       const data = await res.json();
-      console.log("OTP DATA:", data);
 
       if (!res.ok) {
         setMessage(data.msg || "OTP failed ❌");
+        setOtpLoading(false);
         return;
       }
+      
+      setMessage("✅ OTP sent successfully");
 
-      setMessage("OTP sent successfully ✅");
-
-      // go to OTP page
-      setPage("otp");
+      setTimeout(() => {
+        navigate("/otp");
+      }, 1000);
 
     } catch (err) {
-      console.error("OTP ERROR:", err);
+      console.error(err);
       setMessage("Server not reachable ❌");
     }
+
+    setOtpLoading(false);
   };
 
   return (
@@ -90,16 +108,25 @@ function ForgotPassword({ setPage }) {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {/* 🔥 REAL BUTTON */}
-        <button style={styles.button} onClick={handleEmail}>
-          Reset via Email
+        {/* EMAIL */}
+        <button
+          style={styles.button}
+          onClick={handleEmail}
+          disabled={emailLoading}
+        >
+          {emailLoading ? "Sending..." : "Reset via Email"}
         </button>
 
-        <button style={styles.button} onClick={handleOtp}>
-          Reset via OTP
+        {/* OTP */}
+        <button
+          style={styles.button}
+          onClick={handleOtp}
+          disabled={otpLoading}
+        >
+          {otpLoading ? "Sending..." : "Reset via OTP"}
         </button>
 
-        <p style={styles.back} onClick={() => setPage("login")}>
+        <p style={styles.back} onClick={() => navigate("/login")}>
           Back to Login
         </p>
       </div>
@@ -125,7 +152,7 @@ const styles = {
     boxShadow: "0 5px 15px rgba(0,0,0,0.2)"
   },
   input: {
-    width: "100%",
+    width: "94%",
     padding: "10px",
     marginBottom: "10px",
     borderRadius: "5px",

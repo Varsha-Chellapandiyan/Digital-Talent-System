@@ -2,18 +2,29 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import OtpReset from "./pages/OtpReset";
-import { useState } from "react";
+import ResetPassword from "./pages/ResetPassword";
+
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
-  const [page, setPage] = useState("register");
-
   return (
-    <div>
-      {page === "login" && <Login setPage={setPage} />}
-      {page === "register" && <Register setPage={setPage} />}
-      {page === "forgot" && <ForgotPassword setPage={setPage} />}
-      {page === "otp" && <OtpReset setPage={setPage} />}
-    </div>
+    <BrowserRouter>
+      <Routes>
+
+        {/* ✅ Default page */}
+        <Route path="/" element={<Register />} />
+
+        {/* ✅ Auth pages */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot" element={<ForgotPassword />} />
+        <Route path="/otp" element={<OtpReset />} />
+
+        {/* ✅ IMPORTANT RESET PASSWORD ROUTE */}
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+      </Routes>
+    </BrowserRouter>
   );
 }
 
