@@ -1,18 +1,24 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 function ResetPassword() {
   const { token } = useParams();
-  const navigate = useNavigate();
 
   const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleReset = async () => {
     if (loading) return;
 
-    if (!password) {
+    if (!token) {
+      setMessage("Invalid reset link ❌");
+      return;
+    }
+
+    if (!password || !confirmPassword){
       setMessage("Enter new password ❗");
       return;
     }
@@ -21,25 +27,36 @@ function ResetPassword() {
       setMessage("Password must be at least 6 characters ❗");
       return;
     }
-
+       // ✅ CONFIRM PASSWORD CHECK
+    if (password !== confirmPassword) {
+      setMessage("Passwords do not match ❌");
+      return;
+    }
     setLoading(true);
     setMessage("");
 
     try {
-      console.log("🔐 Token:", token);
-         
-      const res = await fetch("http://localhost:4000/api/auth/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          token: token,
-          password: password
-        })
-      });
+      console.log("TOKEN:", token);
 
-      const data = await res.json();
+      const res = await fetch(
+        `http://192.168.2.75:4000/api/auth/reset-password/${token}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ password }),
+        }
+      );
+
+      // 🔥 handle non-JSON safely
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid server response");
+      }
+
       console.log("📥 RESPONSE:", data);
 
       if (!res.ok) {
@@ -48,10 +65,14 @@ function ResetPassword() {
         return;
       }
 
+      // ✅ SUCCESS
       setMessage("Password reset successful ✅");
+      setSuccess(true);
+      setPassword("");
+      setConfirmPassword("");
 
       setTimeout(() => {
-        navigate("/login");
+        window.location.href = "http://192.168.2.75:3000/login";
       }, 1500);
 
     } catch (err) {
@@ -76,8 +97,19 @@ function ResetPassword() {
           onChange={(e) => setPassword(e.target.value)}
           style={styles.input}
         />
-
-        <button style={styles.button} onClick={handleReset} disabled={loading}>
+         {/* ✅ CONFIRM PASSWORD INPUT */}
+        <input
+          type="password"
+          placeholder="Confirm password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          style={styles.input}
+        />
+        <button
+          style={styles.button}
+          onClick={handleReset}
+          disabled={loading || success}
+        >
           {loading ? "Resetting..." : "Reset Password"}
         </button>
       </div>
@@ -87,6 +119,7 @@ function ResetPassword() {
 
 export default ResetPassword;
 
+// 🎨 STYLES
 const styles = {
   container: {
     height: "100vh",
@@ -103,7 +136,7 @@ const styles = {
     textAlign: "center"
   },
   input: {
-    width: "100%",
+    width: "91%",
     padding: "10px",
     marginBottom: "10px"
   },

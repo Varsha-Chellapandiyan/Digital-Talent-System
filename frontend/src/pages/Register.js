@@ -137,7 +137,7 @@ function Register() {
             style={styles.eye}
             onClick={() => setShowPassword(!showPassword)}
           >
-            {showPassword ? "👁️" : "🙈"}
+             {showPassword ? "🔓" : "🔒"}
           </span>
         </div>
 
@@ -154,7 +154,7 @@ function Register() {
             style={styles.eye}
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           >
-            {showConfirmPassword ? "👁️" : "🙈"}
+            {showConfirmPassword ? "🔓" : "🔒"}
           </span>
         </div>
 

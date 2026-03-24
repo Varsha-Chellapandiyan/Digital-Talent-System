@@ -1,22 +1,41 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function OtpReset() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
-
+  const [confirmPassword, setConfirmPassword] = useState(""); // ✅ NEW
   const [loading, setLoading] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false); // 🔥 KEY
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [verifiedOtp, setVerifiedOtp] = useState("");
+  const [shake, setShake] = useState(false);
+
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
 
   const inputsRef = useRef([]);
   const navigate = useNavigate();
 
   const email = localStorage.getItem("resetEmail");
 
-  // 🔢 OTP INPUT
+  // ⏱️ TIMER
+  useEffect(() => {
+    if (otpVerified) return;
+
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      setCanResend(true);
+    }
+  }, [timer, otpVerified]);
+
+  // 🔢 INPUT CHANGE
   const handleChange = (value, index) => {
-    console.log("EMAIL FROM STORAGE:", email);
     if (!/^[0-9]?$/.test(value)) return;
 
     const newOtp = [...otp];
@@ -28,121 +47,165 @@ function OtpReset() {
     }
   };
 
-  // 🔐 VERIFY OTP ONLY
+  // ⌨️ BACKSPACE
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && otp[index] === "" && index > 0) {
+      inputsRef.current[index - 1].focus();
+    }
+  };
+
+  // 🔐 VERIFY OTP
   const handleVerifyOtp = async () => {
-  const finalOtp = otp.join("").trim(); // ✅ clean OTP
+    const finalOtp = otp.join("").trim();
 
-  // ✅ VALIDATION
-  if (!email) {
-    setMsg("Email missing ❗ Try again from forgot password");
-    return;
-  }
+    if (!email) {
+      setMsg("Email missing ❗");
+      return;
+    }
 
-  if (finalOtp.length !== 6) {
-    setMsg("Enter complete 6-digit OTP ❗");
-    return;
-  }
+    if (finalOtp.length !== 6) {
+      setMsg("Enter full OTP ❗");
+      return;
+    }
 
-  setLoading(true);
-  setMsg("");
-
-  try {
-    console.log("📤 Sending OTP:", finalOtp);
-    console.log("📧 Email:", email);
-
-    const res = await fetch("http://192.168.2.75:4000/api/auth/verify-otp", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email: email.trim(),
-        otp: finalOtp // ✅ FIXED (string only)
-      })
-    });
-
-    // 🔥 HANDLE NON-JSON RESPONSE (VERY IMPORTANT)
-    const text = await res.text();
-    let data;
+    setLoading(true);
+    setMsg("");
 
     try {
-      data = JSON.parse(text);
+      const res = await fetch("http://192.168.2.75:4000/api/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, otp: finalOtp })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMsg(data.msg || "Invalid OTP ❌");
+
+        setShake(true);
+        setTimeout(() => setShake(false), 400);
+
+        setLoading(false);
+        return;
+      }
+
+      // ✅ SUCCESS
+      setMsg("✅ OTP Verified");
+      setVerifiedOtp(finalOtp);
+      setOtpVerified(true);
+      setOtp(["", "", "", "", "", ""]);
+
     } catch {
-      console.error("❌ Invalid JSON:", text);
-      setMsg("Server error ❌ (invalid response)");
-      setLoading(false);
-      return;
+      setMsg("Server error ❌");
     }
 
-    console.log("📥 RESPONSE:", data);
+    setLoading(false);
+  };
 
-    if (!res.ok) {
-      setMsg(data.msg || "Invalid OTP ❌");
-      setLoading(false);
-      return;
-    }
-
-    // ✅ SUCCESS
-    setMsg("✅ OTP Verified");
-    setOtpVerified(true); // 🔥 unlock password field
-
-  } catch (err) {
-    console.error("❌ VERIFY ERROR:", err);
-    setMsg("Server not reachable ❌");
-  }
-
-  setLoading(false);
-};
   // 🔐 RESET PASSWORD
   const handleReset = async () => {
-  const finalOtp = otp.join("").trim();
-  const email = localStorage.getItem("resetEmail");
-
-  if (!email || !finalOtp || !password) {
-    setMsg("All fields are required ❗");
-    return;
-  }
-
-  try {
-    const res = await fetch("http://192.168.2.75:4000/api/auth/reset-password-otp", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email,
-        otp: finalOtp,
-        password
-      })
-    });
-
-    const data = await res.json();
-
-    console.log("📤 SENT:", { email, otp: finalOtp, password });
-    console.log("📥 RESPONSE:", data);
-
-    if (!res.ok) {
-      setMsg(data.msg || "Reset failed ❌");
+    if (!email || !verifiedOtp || !password) {
+      setMsg("All fields required ❗");
       return;
     }
 
-    setMsg("✅ Password reset successful");
+    if (password.length < 6) {
+      setMsg("Password must be at least 6 characters ❗");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setMsg("Passwords do not match ❌");
+      return;
+    }
+    setLoading(true);
+    setMsg("");
 
-  } catch (err) {
-    console.error(err);
-    setMsg("Server error ❌");
-  }
-};
+    try {
+      const res = await fetch("http://192.168.2.75:4000/api/auth/reset-password-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          otp: verifiedOtp,
+          password
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMsg(data.msg || "Reset failed ❌");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ SUCCESS
+      setMsg("Password reset successful ✅");
+      setPassword("");
+      setConfirmPassword("");
+      setOtp(["", "", "", "", "", ""]);
+      localStorage.removeItem("resetEmail");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1200);
+
+    } catch {
+      setMsg("Server error ❌");
+    }
+
+    setLoading(false);
+  };
+
+  // 🔁 RESEND OTP
+  const handleResend = async () => {
+    if (!canResend) return;
+
+    setMsg("");
+
+    try {
+      const res = await fetch("http://192.168.2.75:4000/api/auth/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMsg(data.msg || "Resend failed ❌");
+        return;
+      }
+
+      setMsg("🔁 OTP resent");
+
+      setTimer(60);
+      setCanResend(false);
+      setOtp(["", "", "", "", "", ""]);
+      inputsRef.current[0]?.focus();
+
+    } catch {
+      setMsg("Server error ❌");
+    }
+  };
 
   return (
     <div style={styles.container}>
-      <div style={styles.card}>
+      <div style={{ ...styles.card, ...(shake ? styles.shake : {}) }}>
         <h2>OTP Verification</h2>
 
         {msg && <p style={styles.msg}>{msg}</p>}
 
-        {/* OTP INPUT */}
-        <div style={styles.otpContainer}>
+        {/* OTP */}
+        {!otpVerified && (
+          <div style={styles.otpContainer}>
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -150,31 +213,59 @@ function OtpReset() {
               value={digit}
               maxLength="1"
               onChange={(e) => handleChange(e.target.value, index)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
               style={styles.otpBox}
+          
             />
           ))}
         </div>
-
-        {/* VERIFY BUTTON */}
-        {!otpVerified && (
-          <button style={styles.button} onClick={handleVerifyOtp}>
-            {loading ? "Verifying..." : "Verify OTP"}
-          </button>
         )}
 
-        {/* 🔥 SHOW PASSWORD ONLY AFTER VERIFY */}
+        {/* VERIFY + TIMER */}
+        {!otpVerified && (
+          <>
+            <button style={styles.button} onClick={handleVerifyOtp}>
+              {loading ? "Verifying..." : "Verify OTP"}
+            </button>
+
+            <p style={{ textAlign: "center" }}>
+              {timer > 0 ? `Resend OTP in ${timer}s` : "You can resend OTP"}
+            </p>
+
+            <button
+              onClick={handleResend}
+              disabled={!canResend}
+              style={{
+                ...styles.button,
+                background: canResend ? "#007bff" : "gray"
+              }}
+            >
+              Resend OTP
+            </button>
+          </>
+        )}
+
+        {/* PASSWORD */}
         {otpVerified && (
           <>
             <input
               type="password"
               placeholder="Enter new password"
-              style={styles.input}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              style={styles.input}
             />
 
+              <input
+          type="password"
+          placeholder="Confirm password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          style={styles.input}
+        />
+
             <button style={styles.button} onClick={handleReset}>
-              Reset Password
+              {loading ? "Processing..." : "Reset Password"}
             </button>
           </>
         )}
@@ -196,70 +287,47 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "linear-gradient(to right, #232526, #414345)"
+    background: "#232526"
   },
   card: {
     width: "350px",
     padding: "25px",
     background: "#fff",
-    borderRadius: "10px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.2)"
+    borderRadius: "10px"
   },
   otpContainer: {
     display: "flex",
     justifyContent: "space-between",
-    marginBottom: "15px"
+    marginBottom: "10px"
   },
   otpBox: {
-    width: "45px",
-    height: "45px",
-    fontSize: "18px",
-    textAlign: "center",
-    borderRadius: "5px",
-    border: "1px solid #ccc"
+    width: "40px",
+    height: "40px",
+    textAlign: "center"
   },
   input: {
-    width: "94%",
+    width: "93%",
     padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "5px",
-    border: "1px solid #ccc"
+    marginBottom: "10px"
   },
   button: {
     width: "100%",
     padding: "10px",
     marginBottom: "10px",
-    background: "#5c9412",
+    background: "green",
     color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer"
+    border: "none"
   },
   msg: {
     textAlign: "center",
-    color: "green",
-    fontSize: "14px"
+    color: "green"
   },
   back: {
     textAlign: "center",
     color: "blue",
-    cursor: "pointer",
-    marginTop: "10px"
+    cursor: "pointer"
   },
-
-  // 🔥 SHAKE ANIMATION
   shake: {
     animation: "shake 0.3s"
   }
 };
-
-// 🔥 ADD THIS IN index.css OR App.css
-/*
-@keyframes shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
-  75% { transform: translateX(-5px); }
-  100% { transform: translateX(0); }
-}
-*/

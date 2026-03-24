@@ -7,6 +7,10 @@ const crypto = require("crypto");
 const transporter = require("../config/mailer");
 
 // ================= CHECK ROUTE =================
+router.get("/test-reset", (req, res) => {
+  res.json({ msg: "TEST ROUTE WORKING ✅" });
+});
+console.log("AUTH ROUTES LOADED");
 router.get("/check", (req, res) => {
   res.send("Auth route working ✅");
 });
@@ -14,19 +18,28 @@ router.get("/check", (req, res) => {
 // ================= REGISTER =================
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body;
+
+    // ✅ CLEAN INPUT
+    name = name.trim();
+    email = email.trim().toLowerCase();
 
     if (!name || !email || !password) {
       return res.status(400).json({ msg: "All fields required ❗" });
     }
 
+    console.log("REGISTER EMAIL:", email); // 🔍 debug
+
+    // ✅ CHECK EXISTING USER
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ msg: "User already exists ❌" });
     }
 
+    // ✅ HASH PASSWORD
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ✅ SAVE USER
     await User.create({
       name,
       email,
@@ -95,7 +108,47 @@ router.post("/forgot-password", async (req, res) => {
     console.error("FORGOT ERROR:", err);
     res.status(500).json({ msg: "Server error ❌" });
   }
+   
 });
+// ================= RESET PASSWORD WITH TOKEN =================
+router.post("/reset-password/:token", async (req, res) => {
+  try {
+    console.log("🔥 RESET TOKEN API HIT");
+
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ msg: "Invalid request ❌" });
+    }
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ msg: "Token invalid or expired ❌" });
+    }
+
+    // ✅ update password
+    user.password = await bcrypt.hash(password, 10);
+
+    // ✅ clear token
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+
+    await user.save();
+
+    res.json({ msg: "Password reset successful ✅" });
+
+  } catch (err) {
+    console.error("RESET TOKEN ERROR:", err);
+    res.status(500).json({ msg: "Server error ❌" });
+  }
+  
+});
+
 
 // ================= SEND OTP =================
 router.post("/send-otp", async (req, res) => {
@@ -160,11 +213,14 @@ router.post("/verify-otp", async (req, res) => {
     console.error("VERIFY OTP ERROR:", err);
     res.status(500).json({ msg: "Server error ❌" });
   }
-}); // ✅ VERY IMPORTANT CLOSED HERE
+});
+
 
 // ================= RESET PASSWORD WITH OTP =================
 router.post("/reset-password-otp", async (req, res) => {
   try {
+    console.log("🔥 RESET OTP API HIT");
+
     let { email, otp, password } = req.body;
 
     email = email?.trim();

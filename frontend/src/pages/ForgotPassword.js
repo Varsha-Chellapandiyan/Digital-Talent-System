@@ -152,14 +152,14 @@ const styles = {
     boxShadow: "0 5px 15px rgba(0,0,0,0.2)"
   },
   input: {
-    width: "94%",
+    width: "88%",
     padding: "10px",
     marginBottom: "10px",
     borderRadius: "5px",
     border: "1px solid #ccc"
   },
   button: {
-    width: "100%",
+    width: "94%",
     padding: "10px",
     marginBottom: "10px",
     background: "#5c9412",

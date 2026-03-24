@@ -19,7 +19,7 @@ app.use((req, res, next) => {
 // ✅ ROUTES
 const authRoutes = require("./routes/auth");
 app.use("/api/auth", authRoutes);
-
+console.log("AUTH ROUTE FILE:", require.resolve("./routes/auth"));
 // ✅ ROOT TEST
 app.get("/", (req, res) => {
   res.send("Server running ✅");

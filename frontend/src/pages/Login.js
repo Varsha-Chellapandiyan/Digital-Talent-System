@@ -125,7 +125,7 @@ function Login() {
             style={styles.eye}
             onClick={() => setShowPassword(!showPassword)}
           >
-            {showPassword ? "👁️" : "🙈"}
+            {showPassword ? "🔓" : "🔒"}
           </span>
         </div>
 
