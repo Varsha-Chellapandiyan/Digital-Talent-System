@@ -49,7 +49,7 @@ function Login() {
     try {
       console.log("📡 Sending request...");
 
-      const res = await fetch("http://192.168.2.75:4000/api/auth/login", {
+      const res = await fetch("http://localhost:4000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -84,7 +84,7 @@ function Login() {
 
       // ✅ REDIRECT (optional)
       setTimeout(() => {
-        alert("Login Success 🎉");
+        navigate("/dashboard");
       }, 1000);
 
     } catch (err) {

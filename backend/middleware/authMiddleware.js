@@ -2,19 +2,32 @@ const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
   try {
-    const token = req.header("Authorization");
+    const authHeader = req.header("Authorization");
 
-    if (!token) {
-      return res.status(401).json({ message: "No token, access denied" });
+    if (!authHeader) {
+      return res.status(401).json({ msg: "No token ❌" });
     }
 
-    const verified = jwt.verify(token, "secretkey");
+    let token = authHeader;
 
-    req.user = verified;
+    if (authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+
+    const decoded = jwt.verify(token, "secretkey");
+
+    // ✅ HANDLE BOTH CASES (VERY IMPORTANT)
+    req.user = decoded.userId || decoded.id;
+
+    if (!req.user) {
+      return res.status(401).json({ msg: "Invalid token payload ❌" });
+    }
+
     next();
 
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+  } catch (err) {
+    console.error("AUTH ERROR:", err.message);
+    res.status(401).json({ msg: "Token invalid ❌" });
   }
 };
 

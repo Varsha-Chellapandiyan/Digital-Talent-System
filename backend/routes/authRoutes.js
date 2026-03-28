@@ -55,6 +55,8 @@ router.post("/register", async (req, res) => {
 });
 
 // ================= LOGIN =================
+const jwt = require("jsonwebtoken"); // 👈 ADD THIS AT TOP
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -69,46 +71,23 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ msg: "Invalid credentials ❌" });
     }
 
-    res.json({ msg: "Login successful ✅" });
+    // ✅ CREATE TOKEN
+    const token = jwt.sign(
+      { userId: user._id },   // 🔥 VERY IMPORTANT
+      "secretkey",
+      { expiresIn: "1d" }
+    );
+
+    // ✅ SEND TOKEN
+    res.json({
+      msg: "Login successful ✅",
+      token: token
+    });
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     res.status(500).json({ msg: "Server error ❌" });
   }
-});
-
-// ================= FORGOT PASSWORD =================
-router.post("/forgot-password", async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ msg: "User not found ❌" });
-    }
-
-    const token = crypto.randomBytes(32).toString("hex");
-
-    user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 3600000;
-    await user.save();
-
-    const link = `http://localhost:3000/reset-password/${token}`;
-
-    await transporter.sendMail({
-      from: "varshachellapandiyan06@gmail.com",
-      to: email,
-      subject: "Reset Password",
-      text: `Click here to reset your password:\n${link}`
-    });
-
-    res.json({ msg: "Reset link sent to email ✅" });
-
-  } catch (err) {
-    console.error("FORGOT ERROR:", err);
-    res.status(500).json({ msg: "Server error ❌" });
-  }
-   
 });
 // ================= RESET PASSWORD WITH TOKEN =================
 router.post("/reset-password/:token", async (req, res) => {

@@ -39,7 +39,7 @@ function ResetPassword() {
       console.log("TOKEN:", token);
 
       const res = await fetch(
-        `http://192.168.2.75:4000/api/auth/reset-password/${token}`,
+        `http://localhost:4000/api/auth/reset-password/${token}`,
         {
           method: "POST",
           headers: {
@@ -72,7 +72,7 @@ function ResetPassword() {
       setConfirmPassword("");
 
       setTimeout(() => {
-        window.location.href = "http://192.168.2.75:3000/login";
+        window.location.href = "http://localhost:3000/login";
       }, 1500);
 
     } catch (err) {

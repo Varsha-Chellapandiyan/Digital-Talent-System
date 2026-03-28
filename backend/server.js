@@ -17,9 +17,17 @@ app.use((req, res, next) => {
 });
 
 // ✅ ROUTES
-const authRoutes = require("./routes/auth");
+const authRoutes = require("./routes/authRoutes.js");
 app.use("/api/auth", authRoutes);
-console.log("AUTH ROUTE FILE:", require.resolve("./routes/auth"));
+console.log("AUTH ROUTE FILE:", require.resolve("./routes/authRoutes"));
+
+const taskRoutes = require("./routes/taskRoutes");
+app.use("/api/tasks", taskRoutes);
+
+
+// 🔥 ADD THIS EXACTLY HERE
+const fs = require("fs");
+console.log("FILES INSIDE ROUTES:", fs.readdirSync("./routes"));
 // ✅ ROOT TEST
 app.get("/", (req, res) => {
   res.send("Server running ✅");
@@ -31,6 +39,6 @@ mongoose.connect("mongodb://127.0.0.1:27017/myapp")
   .catch(err => console.log("DB ERROR:", err));
 
 // ✅ START SERVER
-app.listen(4000, "0.0.0.0", () => {
+app.listen(4000, () => {
   console.log("🚀 Server running on http://localhost:4000");
 });
