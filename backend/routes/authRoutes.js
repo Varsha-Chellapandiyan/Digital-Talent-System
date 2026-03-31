@@ -5,12 +5,15 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const transporter = require("../config/mailer");
+const jwt = require("jsonwebtoken");
 
-// ================= CHECK ROUTE =================
+// ================= CHECK ROUTES =================
 router.get("/test-reset", (req, res) => {
   res.json({ msg: "TEST ROUTE WORKING ✅" });
 });
+
 console.log("AUTH ROUTES LOADED");
+
 router.get("/check", (req, res) => {
   res.send("Auth route working ✅");
 });
@@ -20,7 +23,6 @@ router.post("/register", async (req, res) => {
   try {
     let { name, email, password } = req.body;
 
-    // ✅ CLEAN INPUT
     name = name.trim();
     email = email.trim().toLowerCase();
 
@@ -28,18 +30,13 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ msg: "All fields required ❗" });
     }
 
-    console.log("REGISTER EMAIL:", email); // 🔍 debug
-
-    // ✅ CHECK EXISTING USER
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ msg: "User already exists ❌" });
     }
 
-    // ✅ HASH PASSWORD
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ SAVE USER
     await User.create({
       name,
       email,
@@ -55,8 +52,6 @@ router.post("/register", async (req, res) => {
 });
 
 // ================= LOGIN =================
-const jwt = require("jsonwebtoken"); // 👈 ADD THIS AT TOP
-
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -71,14 +66,12 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ msg: "Invalid credentials ❌" });
     }
 
-    // ✅ CREATE TOKEN
     const token = jwt.sign(
-      { userId: user._id },   // 🔥 VERY IMPORTANT
+      { userId: user._id },
       "secretkey",
       { expiresIn: "1d" }
     );
 
-    // ✅ SEND TOKEN
     res.json({
       msg: "Login successful ✅",
       token: token
@@ -89,6 +82,54 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ msg: "Server error ❌" });
   }
 });
+
+// ================= FORGOT PASSWORD (EMAIL LINK) =================
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ msg: "Email required ❗" });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found ❌" });
+    }
+
+    // ✅ GENERATE TOKEN
+    const token = crypto.randomBytes(32).toString("hex");
+
+    // ✅ SAVE TOKEN
+    user.resetToken = token;
+    user.resetTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 min
+    await user.save();
+
+    // ✅ RESET LINK
+    const resetLink = `http://localhost:3000/reset-password/${token}`;
+
+    // ✅ SEND EMAIL
+    await transporter.sendMail({
+      from: "varshachellapandiyan06@gmail.com",
+      to: email,
+      subject: "Password Reset",
+      html: `
+        <h3>Password Reset</h3>
+        <p>Click below link to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link expires in 15 minutes.</p>
+      `
+    });
+
+    res.json({ msg: "Reset link sent to email 📩" });
+
+  } catch (err) {
+    console.error("FORGOT PASSWORD ERROR:", err);
+    res.status(500).json({ msg: "Server error ❌" });
+  }
+});
+
 // ================= RESET PASSWORD WITH TOKEN =================
 router.post("/reset-password/:token", async (req, res) => {
   try {
@@ -110,10 +151,8 @@ router.post("/reset-password/:token", async (req, res) => {
       return res.status(400).json({ msg: "Token invalid or expired ❌" });
     }
 
-    // ✅ update password
     user.password = await bcrypt.hash(password, 10);
 
-    // ✅ clear token
     user.resetToken = undefined;
     user.resetTokenExpiry = undefined;
 
@@ -125,9 +164,7 @@ router.post("/reset-password/:token", async (req, res) => {
     console.error("RESET TOKEN ERROR:", err);
     res.status(500).json({ msg: "Server error ❌" });
   }
-  
 });
-
 
 // ================= SEND OTP =================
 router.post("/send-otp", async (req, res) => {
@@ -193,7 +230,6 @@ router.post("/verify-otp", async (req, res) => {
     res.status(500).json({ msg: "Server error ❌" });
   }
 });
-
 
 // ================= RESET PASSWORD WITH OTP =================
 router.post("/reset-password-otp", async (req, res) => {

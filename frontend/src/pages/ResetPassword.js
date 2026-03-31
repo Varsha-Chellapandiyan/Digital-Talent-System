@@ -1,86 +1,30 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 function ResetPassword() {
   const { token } = useParams();
+  const navigate = useNavigate();
 
   const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [confirm, setConfirm] = useState("");
+  const [msg, setMsg] = useState("");
 
   const handleReset = async () => {
-    if (loading) return;
+    if (password !== confirm) return setMsg("Mismatch ❌");
 
-    if (!token) {
-      setMessage("Invalid reset link ❌");
-      return;
-    }
+    const res = await fetch(`http://localhost:4000/api/auth/reset-password/${token}`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ password })
+    });
 
-    if (!password || !confirmPassword){
-      setMessage("Enter new password ❗");
-      return;
-    }
+    const data = await res.json();
 
-    if (password.length < 6) {
-      setMessage("Password must be at least 6 characters ❗");
-      return;
-    }
-       // ✅ CONFIRM PASSWORD CHECK
-    if (password !== confirmPassword) {
-      setMessage("Passwords do not match ❌");
-      return;
-    }
-    setLoading(true);
-    setMessage("");
+    if (!res.ok) return setMsg(data.msg);
 
-    try {
-      console.log("TOKEN:", token);
+    setMsg("Success ✅");
 
-      const res = await fetch(
-        `http://localhost:4000/api/auth/reset-password/${token}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ password }),
-        }
-      );
-
-      // 🔥 handle non-JSON safely
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("Invalid server response");
-      }
-
-      console.log("📥 RESPONSE:", data);
-
-      if (!res.ok) {
-        setMessage(data.msg || "Reset failed ❌");
-        setLoading(false);
-        return;
-      }
-
-      // ✅ SUCCESS
-      setMessage("Password reset successful ✅");
-      setSuccess(true);
-      setPassword("");
-      setConfirmPassword("");
-
-      setTimeout(() => {
-        window.location.href = "http://localhost:3000/login";
-      }, 1500);
-
-    } catch (err) {
-      console.error("RESET ERROR:", err);
-      setMessage("Server error ❌");
-    }
-
-    setLoading(false);
+    setTimeout(()=>navigate("/"),1000);
   };
 
   return (
@@ -88,30 +32,15 @@ function ResetPassword() {
       <div style={styles.card}>
         <h2>Reset Password</h2>
 
-        {message && <p style={styles.msg}>{message}</p>}
+        {msg && <p style={{color: msg.includes("❌") ? "red":"green"}}>{msg}</p>}
 
-        <input
-          type="password"
-          placeholder="Enter new password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
-         {/* ✅ CONFIRM PASSWORD INPUT */}
-        <input
-          type="password"
-          placeholder="Confirm password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          style={styles.input}
-        />
-        <button
-          style={styles.button}
-          onClick={handleReset}
-          disabled={loading || success}
-        >
-          {loading ? "Resetting..." : "Reset Password"}
-        </button>
+        <input type="password" placeholder="New Password"
+          onChange={(e)=>setPassword(e.target.value)} />
+
+        <input type="password" placeholder="Confirm"
+          onChange={(e)=>setConfirm(e.target.value)} />
+
+        <button onClick={handleReset}>Reset</button>
       </div>
     </div>
   );
@@ -119,37 +48,7 @@ function ResetPassword() {
 
 export default ResetPassword;
 
-// 🎨 STYLES
 const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#f2f2f2"
-  },
-  card: {
-    width: "300px",
-    padding: "20px",
-    background: "#fff",
-    borderRadius: "10px",
-    textAlign: "center"
-  },
-  input: {
-    width: "91%",
-    padding: "10px",
-    marginBottom: "10px"
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    background: "green",
-    color: "#fff",
-    border: "none",
-    cursor: "pointer"
-  },
-  msg: {
-    marginBottom: "10px",
-    color: "blue"
-  }
+  container:{height:"100vh",display:"flex",justifyContent:"center",alignItems:"center"},
+  card:{padding:20,background:"#fff"}
 };

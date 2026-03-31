@@ -1,0 +1,210 @@
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+/* BODY FIX */
+body {
+  overflow-x: hidden;
+}
+
+/* WRAPPER */
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background: #f6f5f7;
+  overflow: hidden;
+}
+
+/* MAIN CONTAINER */
+.container {
+  background: #fff;
+  border-radius: 20px;
+  width: 900px;
+  max-width: 95%;
+  min-height: 550px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* FORM CONTAINER */
+.form-container {
+  position: absolute;
+  top: 0;
+  left: 0; 
+  width: 50%;
+  height: 100%;
+  transition: all 0.6s ease-in-out;
+}
+
+/* SIGN IN */
+.sign-in {
+  left: 0;
+  z-index: 2;
+}
+
+/* SIGN UP */
+.sign-up {
+  left: 50%;
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 🔥 ANIMATION FIX */
+.container.active .sign-in {
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.container.active .sign-up {
+  transform: translateX(-100%);
+  opacity: 1;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+/* FORM STYLE */
+form {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding: 0 50px;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+}
+
+/* INPUT */
+input {
+  background: #eee;
+  border: none;
+  padding: 12px;
+  margin: 8px 0;
+  width: 100%;
+  border-radius: 8px;
+}
+
+/* BUTTON */
+button {
+  border-radius: 20px;
+  border: none;
+  padding: 12px 45px;
+  background: linear-gradient(to right, #ff4b2b, #ff416c);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* FORGOT PASSWORD */
+.forgot {
+  margin-top: 10px;
+  color: blue;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* TOGGLE CONTAINER */
+.toggle-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+.form-container {
+  z-index: 2; 
+}
+
+/* SLIDING PANEL */
+.toggle {
+  background: linear-gradient(to right, #ff4b2b, #ff416c);
+  height: 100%;
+  width: 200%;
+  position: relative;
+  left: -100%;
+  transition: transform 0.6s ease-in-out;
+}
+
+/* 🔥 FIX: smooth sliding */
+.container.active .toggle {
+  transform: translateX(50%);
+}
+
+/* PANEL CONTENT */
+.toggle-panel {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 40px;
+  color: white;
+}
+
+/* LEFT PANEL */
+.toggle-left {
+  transform: translateX(-200%);
+}
+
+/* 🔥 FIX */
+.container.active .toggle-left {
+  transform: translateX(0);
+}
+
+/* RIGHT PANEL */
+.toggle-right {
+  right: 0;
+}
+
+/* TEXT */
+h1 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+/* 🔥 MOBILE FIX */
+@media (max-width: 768px) {
+  .container {
+    width: 100%;
+    height: auto;
+    border-radius: 0;
+  }
+
+  .form-container {
+    position: relative;
+    width: 100%;
+    height: auto;
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .toggle-container {
+    display: none;
+  }
+
+  form {
+    padding: 20px;
+  }
+}

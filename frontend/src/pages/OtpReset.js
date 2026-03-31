@@ -5,7 +5,7 @@ function OtpReset() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // ✅ NEW
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [verifiedOtp, setVerifiedOtp] = useState("");
@@ -18,6 +18,11 @@ function OtpReset() {
   const navigate = useNavigate();
 
   const email = localStorage.getItem("resetEmail");
+
+  // 🔥 AUTO FOCUS FIRST INPUT
+  useEffect(() => {
+    inputsRef.current[0]?.focus();
+  }, []);
 
   // ⏱️ TIMER
   useEffect(() => {
@@ -37,6 +42,8 @@ function OtpReset() {
   // 🔢 INPUT CHANGE
   const handleChange = (value, index) => {
     if (!/^[0-9]?$/.test(value)) return;
+
+    setMsg(""); // 🔥 clear error while typing
 
     const newOtp = [...otp];
     newOtp[index] = value;
@@ -116,10 +123,12 @@ function OtpReset() {
       setMsg("Password must be at least 6 characters ❗");
       return;
     }
+
     if (password !== confirmPassword) {
       setMsg("Passwords do not match ❌");
       return;
     }
+
     setLoading(true);
     setMsg("");
 
@@ -152,7 +161,8 @@ function OtpReset() {
       localStorage.removeItem("resetEmail");
 
       setTimeout(() => {
-        navigate("/login");
+          localStorage.setItem("showLogin", "true"); 
+        navigate("/");
       }, 1200);
 
     } catch {
@@ -165,6 +175,11 @@ function OtpReset() {
   // 🔁 RESEND OTP
   const handleResend = async () => {
     if (!canResend) return;
+
+    if (!email) {  // 🔥 FIX
+      setMsg("Email missing ❗");
+      return;
+    }
 
     setMsg("");
 
@@ -206,25 +221,30 @@ function OtpReset() {
         {/* OTP */}
         {!otpVerified && (
           <div style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <input
-              key={index}
-              ref={(el) => (inputsRef.current[index] = el)}
-              value={digit}
-              maxLength="1"
-              onChange={(e) => handleChange(e.target.value, index)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-              style={styles.otpBox}
-          
-            />
-          ))}
-        </div>
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                type="text"               // 🔥 FIX
+                inputMode="numeric"      // 🔥 FIX
+                ref={(el) => (inputsRef.current[index] = el)}
+                value={digit}
+                maxLength="1"
+                onChange={(e) => handleChange(e.target.value, index)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
+                style={styles.otpBox}
+              />
+            ))}
+          </div>
         )}
 
         {/* VERIFY + TIMER */}
         {!otpVerified && (
           <>
-            <button style={styles.button} onClick={handleVerifyOtp}>
+            <button
+              style={styles.button}
+              onClick={handleVerifyOtp}
+              disabled={loading}   // 🔥 FIX
+            >
               {loading ? "Verifying..." : "Verify OTP"}
             </button>
 
@@ -254,15 +274,17 @@ function OtpReset() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={styles.input}
+              autoComplete="new-password" // 🔥 FIX
             />
 
-              <input
-          type="password"
-          placeholder="Confirm password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          style={styles.input}
-        />
+            <input
+              type="password"
+              placeholder="Confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              style={styles.input}
+              autoComplete="new-password"
+            />
 
             <button style={styles.button} onClick={handleReset}>
               {loading ? "Processing..." : "Reset Password"}
@@ -270,7 +292,7 @@ function OtpReset() {
           </>
         )}
 
-        <p style={styles.back} onClick={() => navigate("/login")}>
+        <p style={styles.back} onClick={() => navigate("/")}>
           Back to Login
         </p>
       </div>

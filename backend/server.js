@@ -17,13 +17,16 @@ app.use((req, res, next) => {
 });
 
 // ✅ ROUTES
-const authRoutes = require("./routes/authRoutes.js");
+const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 console.log("AUTH ROUTE FILE:", require.resolve("./routes/authRoutes"));
 
 const taskRoutes = require("./routes/taskRoutes");
 app.use("/api/tasks", taskRoutes);
-
+app.post("/api/auth/forgot-password", (req, res) => {
+  console.log("🔥 DIRECT ROUTE HIT");
+  res.json({ msg: "Direct route working ✅" });
+});
 
 // 🔥 ADD THIS EXACTLY HERE
 const fs = require("fs");

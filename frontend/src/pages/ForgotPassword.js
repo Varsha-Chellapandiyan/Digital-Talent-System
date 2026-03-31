@@ -3,94 +3,70 @@ import { useNavigate } from "react-router-dom";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState(""); // 🔥 NEW (email or otp)
 
   const navigate = useNavigate();
 
-  // ✅ EMAIL RESET
-  const handleEmail = async () => {
-    if (emailLoading) return;
-
-    if (!email) {
-      setMessage("Please enter email ❗");
-      return;
-    }
-
-    setEmailLoading(true);
-    setMessage("");
-
-    try {
-      const res = await fetch("http://localhost:4000/api/auth/forgot-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email: email.trim() })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage(data.msg || "Something went wrong ❌");
-        setEmailLoading(false);
-        return;
-      }
-
-      setMessage("📩 Reset link sent! Check your email");
-
-    } catch (err) {
-      console.error(err);
-      setMessage("Server not reachable ❌");
-    }
-
-    setEmailLoading(false);
-  };
-
-  // ✅ OTP RESET
+  // ✅ OTP RESET (already yours)
   const handleOtp = async () => {
-    if (otpLoading) return;
+    if (!email) return setMsg("Enter email ❗");
 
-    if (!email) {
-      setMessage("Please enter email ❗");
-      return;
-    }
-
-    setOtpLoading(true);
-    setMessage("");
+    setLoading(true);
+    setMode("otp");
+    setMsg("");
 
     try {
       localStorage.setItem("resetEmail", email);
+
       const res = await fetch("http://localhost:4000/api/auth/send-otp", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email: email.trim() })
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email })
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setMessage(data.msg || "OTP failed ❌");
-        setOtpLoading(false);
-        return;
-      }
-      
-      setMessage("✅ OTP sent successfully");
+      if (!res.ok) return setMsg(data.msg || "OTP failed ❌");
 
-      setTimeout(() => {
-        navigate("/otp");
-      }, 1000);
+      setMsg("OTP sent to your email ✅");
 
-    } catch (err) {
-      console.error(err);
-      setMessage("Server not reachable ❌");
+      setTimeout(() => navigate("/otp"), 1000);
+
+    } catch {
+      setMsg("Server error ❌");
     }
 
-    setOtpLoading(false);
+    setLoading(false);
+  };
+
+  // ✅ EMAIL RESET (🔥 NEW)
+  const handleEmail = async () => {
+    if (!email) return setMsg("Enter email ❗");
+
+    setLoading(true);
+    setMode("email");
+    setMsg("");
+
+    try {
+      const res = await fetch("http://127.0.0.1:4000/api/auth/forgot-password", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) return setMsg(data.msg || "Email failed ❌");
+
+      setMsg("Reset link sent to your email 📩");
+
+    } catch {
+      setMsg("Server error ❌");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -98,36 +74,42 @@ function ForgotPassword() {
       <div style={styles.card}>
         <h2>Forgot Password</h2>
 
-        {message && <p style={styles.msg}>{message}</p>}
+        {msg && (
+          <p style={{
+            color: msg.includes("❌") ? "red" : "green"
+          }}>
+            {msg}
+          </p>
+        )}
 
         <input
-          style={styles.input}
           type="email"
           placeholder="Enter your email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e)=>setEmail(e.target.value)}
+          style={styles.input}
         />
 
-        {/* EMAIL */}
+        {/* 🔥 EMAIL RESET */}
         <button
-          style={styles.button}
           onClick={handleEmail}
-          disabled={emailLoading}
-        >
-          {emailLoading ? "Sending..." : "Reset via Email"}
-        </button>
-
-        {/* OTP */}
-        <button
+          disabled={loading}
           style={styles.button}
-          onClick={handleOtp}
-          disabled={otpLoading}
         >
-          {otpLoading ? "Sending..." : "Reset via OTP"}
+          {loading && mode==="email" ? "Sending..." : "Reset via Email"}
         </button>
 
-        <p style={styles.back} onClick={() => navigate("/login")}>
-          Back to Login
+        {/* 🔥 OTP RESET */}
+        <button
+          onClick={handleOtp}
+          disabled={loading}
+          style={styles.button}
+        >
+          {loading && mode==="otp" ? "Sending..." : "Reset via OTP"}
+        </button>
+
+        <p onClick={()=>navigate("/")} style={styles.back}>
+          ← Back to Login
         </p>
       </div>
     </div>
@@ -136,47 +118,38 @@ function ForgotPassword() {
 
 export default ForgotPassword;
 
+// 🎨 styles (same as yours)
 const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(to right, #232526, #414345)"
+  container:{
+    height:"100vh",
+    display:"flex",
+    justifyContent:"center",
+    alignItems:"center",
+    background:"linear-gradient(to right, #232526, #414345)"
   },
-  card: {
-    width: "350px",
-    padding: "25px",
-    background: "#fff",
-    borderRadius: "10px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.2)"
+  card:{
+    width:"350px",
+    padding:"25px",
+    background:"#fff",
+    borderRadius:"10px",
+    textAlign:"center"
   },
-  input: {
-    width: "88%",
-    padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "5px",
-    border: "1px solid #ccc"
+  input:{
+    width:"90%",
+    padding:"10px",
+    marginBottom:"10px"
   },
-  button: {
-    width: "94%",
-    padding: "10px",
-    marginBottom: "10px",
-    background: "#5c9412",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer"
+  button:{
+    width:"95%",
+    padding:"10px",
+    marginBottom:"10px",
+    background:"#ff416c",
+    color:"#fff",
+    border:"none",
+    cursor:"pointer"
   },
-  msg: {
-    textAlign: "center",
-    color: "green",
-    fontSize: "14px"
-  },
-  back: {
-    textAlign: "center",
-    color: "blue",
-    cursor: "pointer",
-    marginTop: "10px"
+  back:{
+    color:"blue",
+    cursor:"pointer"
   }
 };

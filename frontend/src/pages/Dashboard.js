@@ -6,8 +6,6 @@ import { ThemeContext } from "../context/ThemeContext";
 
 function Dashboard() {
   const navigate = useNavigate();
-
-  // 🌙 GLOBAL DARK MODE
   const { darkMode, setDarkMode } = useContext(ThemeContext);
 
   const [tasks, setTasks] = useState([]);
@@ -16,7 +14,7 @@ function Dashboard() {
   // 🔐 AUTH CHECK
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) navigate("/login");
+    if (!token) navigate("/"); // ✅ FIXED
   }, [navigate]);
 
   // 📡 LOAD TASKS
@@ -46,8 +44,8 @@ function Dashboard() {
   const theme = darkMode ? dark : light;
 
   return (
-<div style={{ ...styles.container, color: theme.text }}>
-          <Toaster />
+    <div style={{ ...styles.container, background: theme.bg, color: theme.text }}>
+      <Toaster />
 
       {/* SIDEBAR */}
       <div style={{ ...styles.sidebar, background: theme.sidebar }}>
@@ -71,7 +69,7 @@ function Dashboard() {
           style={styles.logout}
           onClick={() => {
             localStorage.clear();
-            navigate("/login");
+            navigate("/"); // ✅ FIXED
           }}
         >
           Logout
@@ -84,7 +82,6 @@ function Dashboard() {
         <div style={styles.header}>
           <h1>Dashboard</h1>
 
-          {/* 🌙 TOGGLE BUTTON */}
           <button
             style={styles.toggle}
             onClick={() => setDarkMode(!darkMode)}
@@ -137,10 +134,18 @@ const dark = {
 
 // 🎨 STYLES
 const styles = {
-  container: { display: "flex", height: "100vh" },
+  container: {
+    display: "flex",
+    minHeight: "100vh",
+    width: "100%"
+  },
 
   sidebar: {
     width: 240,
+    height: "100vh",          // ✅ FULL HEIGHT
+    position: "fixed",        // ✅ FIXED SIDEBAR
+    left: 0,
+    top: 0,
     color: "#fff",
     padding: 20,
     display: "flex",
@@ -165,7 +170,9 @@ const styles = {
 
   main: {
     flex: 1,
-    padding: 30
+    marginLeft: 240,          // ✅ SPACE FOR SIDEBAR
+    padding: 30,
+    minHeight: "100vh"
   },
 
   header: {
@@ -174,12 +181,12 @@ const styles = {
     alignItems: "center"
   },
 
- toggle: {
-  padding: 8,
-  borderRadius: 6,
-  border: "none",
-  cursor: "pointer"
-},
+  toggle: {
+    padding: 8,
+    borderRadius: 6,
+    border: "none",
+    cursor: "pointer"
+  },
 
   welcome: {
     marginTop: 20,
