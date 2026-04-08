@@ -9,7 +9,6 @@ function ForgotPassword() {
 
   const navigate = useNavigate();
 
-  // ✅ OTP RESET (already yours)
   const handleOtp = async () => {
     if (!email) return setMsg("Enter email ❗");
 
@@ -41,7 +40,6 @@ function ForgotPassword() {
     setLoading(false);
   };
 
-  // ✅ EMAIL RESET (🔥 NEW)
   const handleEmail = async () => {
     if (!email) return setMsg("Enter email ❗");
 
@@ -90,7 +88,6 @@ function ForgotPassword() {
           style={styles.input}
         />
 
-        {/* 🔥 EMAIL RESET */}
         <button
           onClick={handleEmail}
           disabled={loading}
@@ -99,7 +96,6 @@ function ForgotPassword() {
           {loading && mode==="email" ? "Sending..." : "Reset via Email"}
         </button>
 
-        {/* 🔥 OTP RESET */}
         <button
           onClick={handleOtp}
           disabled={loading}
@@ -118,7 +114,6 @@ function ForgotPassword() {
 
 export default ForgotPassword;
 
-// 🎨 styles (same as yours)
 const styles = {
   container:{
     height:"100vh",

@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const connectDB = require("./config/db"); // ✅ Import DB connection logic
 
 const app = express();
 
@@ -23,10 +24,7 @@ console.log("AUTH ROUTE FILE:", require.resolve("./routes/authRoutes"));
 
 const taskRoutes = require("./routes/taskRoutes");
 app.use("/api/tasks", taskRoutes);
-app.post("/api/auth/forgot-password", (req, res) => {
-  console.log("🔥 DIRECT ROUTE HIT");
-  res.json({ msg: "Direct route working ✅" });
-});
+
 
 // 🔥 ADD THIS EXACTLY HERE
 const fs = require("fs");
@@ -37,11 +35,18 @@ app.get("/", (req, res) => {
 });
 
 // ✅ DATABASE
-mongoose.connect("mongodb://127.0.0.1:27017/myapp")
-  .then(() => console.log("MongoDB connected ✅"))
-  .catch(err => console.log("DB ERROR:", err));
+connectDB(); // ✅ Call centralized DB connection
 
-// ✅ START SERVER
+// ✅ GLOBAL ERROR HANDLER
+app.use((err, req, res, next) => {
+  console.error("🔥 GLOBAL ERROR:", err);
+  res.status(500).json({
+    msg: "Something went wrong on the server ❌",
+    error: err.message,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined
+  });
+});
+
 app.listen(4000, () => {
   console.log("🚀 Server running on http://localhost:4000");
 });

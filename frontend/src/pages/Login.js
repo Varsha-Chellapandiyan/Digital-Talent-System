@@ -15,13 +15,11 @@ function Login() {
 
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ HANDLE INPUT
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
   };
 
-  // ✅ LOGIN FUNCTION
   const handleLogin = async () => {
     console.log("🔥 Login button clicked");
 
@@ -32,7 +30,6 @@ function Login() {
     setError("");
     setSuccess("");
 
-    // ✅ VALIDATION
     if (!email || !password) {
       setError("Please fill all fields");
       return;
@@ -69,20 +66,20 @@ function Login() {
         return;
       }
 
-      // ✅ SAVE TOKEN
       if (data.token) {
         localStorage.setItem("token", data.token);
+        // Force admin role if it's the designated admin email
+        const isAdmin = email.trim().toLowerCase() === "varshachellapandiyan06@gmail.com" || data.role === "admin";
+        localStorage.setItem("role", isAdmin ? "admin" : (data.role || "user"));
       }
 
       setSuccess("Login successful ✅");
 
-      // ✅ CLEAR FORM
       setForm({
         email: "",
         password: ""
       });
 
-      // ✅ REDIRECT (optional)
       setTimeout(() => {
         navigate("/dashboard");
       }, 1000);
@@ -157,7 +154,6 @@ function Login() {
 
 export default Login;
 
-// 🎨 STYLES
 const styles = {
   container: {
     height: "100vh",

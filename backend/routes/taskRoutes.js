@@ -1,24 +1,25 @@
 const express = require("express");
 const router = express.Router();
 
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware, isAdmin } = require("../middleware/authMiddleware");
 const {
   getTasks,
   createTask,
   updateTask,
-  deleteTask
+  deleteTask,
+  getAnalytics,
+  getAdminAnalytics
 } = require("../controllers/taskController");
 
-// 📥 GET
+router.get("/analytics", authMiddleware, getAnalytics);
+router.get("/admin/analytics", authMiddleware, isAdmin, getAdminAnalytics);
+
 router.get("/", authMiddleware, getTasks);
 
-// ➕ CREATE
 router.post("/", authMiddleware, createTask);
 
-// ✏️ UPDATE
 router.put("/:id", authMiddleware, updateTask);
 
-// ❌ DELETE
 router.delete("/:id", authMiddleware, deleteTask);
 
 module.exports = router;

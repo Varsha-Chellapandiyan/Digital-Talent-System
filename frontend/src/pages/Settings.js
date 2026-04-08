@@ -7,7 +7,6 @@ function Settings() {
   const navigate = useNavigate();
   const { darkMode, setDarkMode } = useContext(ThemeContext);
 
-  // ✅ PROFILE STATES
   const [name, setName] = useState(localStorage.getItem("name") || "");
   const [email, setEmail] = useState(localStorage.getItem("email") || "");
   const [phone, setPhone] = useState(localStorage.getItem("phone") || "");
@@ -17,14 +16,12 @@ function Settings() {
     localStorage.getItem("profilePic") || ""
   );
 
-  // 🔐 PASSWORD
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 const [showNewPassword, setShowNewPassword] = useState(false);
 const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const theme = darkMode ? dark : light;
 
-  // ✅ IMAGE UPLOAD
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -37,7 +34,6 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     reader.readAsDataURL(file);
   };
 
-  // ✅ PROFILE UPDATE
   const handleProfileUpdate = () => {
     if (!name || !email) {
       return toast.error("Name & Email required ❌");
@@ -60,7 +56,6 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     toast.success("Profile updated ✅");
   };
 
-  // 🔐 PASSWORD CHANGE
   const handlePasswordChange = () => {
     if (!password || !confirmPassword) {
       return toast.error("Fill all fields ❌");
@@ -75,18 +70,16 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     setConfirmPassword("");
   };
 
-  // 🔥 RESET
   const handleReset = () => {
     localStorage.clear();
     toast.success("Account reset ✅");
-    navigate("/login");
+    navigate("/");
   };
 
   return (
     <div style={{ ...styles.container, background: theme.bg, color: theme.text }}>
       <Toaster />
 
-      {/* SIDEBAR */}
       <div style={{ ...styles.sidebar, background: theme.sidebar }}>
         <h2>🚀 TaskPro</h2>
 
@@ -98,15 +91,13 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
         <button style={styles.logout} onClick={() => {
           localStorage.clear();
-          navigate("/login");
+          navigate("/");
         }}>
           Logout
         </button>
       </div>
 
-      {/* MAIN */}
       <div style={styles.main}>
-        {/* HEADER */}
         <div style={styles.header}>
           <h1>Settings</h1>
 
@@ -115,11 +106,9 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
           </button>
         </div>
 
-        {/* PROFILE */}
         <div style={styles.card(theme)}>
           <h2>👤 Profile</h2>
 
-          {/* IMAGE */}
           <div style={{ textAlign: "center" }}>
             <img
               src={profilePic || "https://via.placeholder.com/100"}
@@ -159,7 +148,6 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
           </button>
         </div>
 
-        {/* ACCOUNT INFO */}
         <div style={styles.card(theme)}>
           <h2>📊 Account Info</h2>
           <p><b>Name:</b> {name}</p>
@@ -168,7 +156,6 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
           <p><b>Role:</b> {role || "Not set"}</p>
         </div>
 
-        {/* PASSWORD */}
         <div style={styles.card(theme)}>
           <h2>🔒 Change Password</h2>
 
@@ -187,8 +174,8 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     onClick={() => setShowNewPassword(!showNewPassword)}
   >
     {showNewPassword ? "🙈" : "👁"}
-  </button>
-</div>          </div>
+       </button>
+      </div>          </div>
 
           <div style={styles.field}>
             <label>Confirm Password</label>
@@ -213,7 +200,6 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
           </button>
         </div>
 
-        {/* RESET */}
         <button style={styles.dangerBtn} onClick={handleReset}>
           Reset Account
         </button>
@@ -226,7 +212,6 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 export default Settings;
 
 
-// 🎨 THEMES
 const light = {
   bg: "#f8fafc",
   text: "#000",
@@ -244,7 +229,6 @@ const dark = {
 };
 
 
-// 🎨 STYLES
 const styles = {
   container: { display: "flex", height: "100vh" },
 
@@ -357,7 +341,6 @@ eyeBtn: {
 };
 
 
-// 🔗 LINK STYLE
 const linkStyle = (isActive) => ({
   color: isActive ? "#fff" : "#94a3b8",
   background: isActive ? "#2563eb" : "transparent",

@@ -19,12 +19,10 @@ function OtpReset() {
 
   const email = localStorage.getItem("resetEmail");
 
-  // 🔥 AUTO FOCUS FIRST INPUT
   useEffect(() => {
     inputsRef.current[0]?.focus();
   }, []);
 
-  // ⏱️ TIMER
   useEffect(() => {
     if (otpVerified) return;
 
@@ -39,7 +37,6 @@ function OtpReset() {
     }
   }, [timer, otpVerified]);
 
-  // 🔢 INPUT CHANGE
   const handleChange = (value, index) => {
     if (!/^[0-9]?$/.test(value)) return;
 
@@ -54,14 +51,13 @@ function OtpReset() {
     }
   };
 
-  // ⌨️ BACKSPACE
+  
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && otp[index] === "" && index > 0) {
       inputsRef.current[index - 1].focus();
     }
   };
 
-  // 🔐 VERIFY OTP
   const handleVerifyOtp = async () => {
     const finalOtp = otp.join("").trim();
 
@@ -99,7 +95,6 @@ function OtpReset() {
         return;
       }
 
-      // ✅ SUCCESS
       setMsg("✅ OTP Verified");
       setVerifiedOtp(finalOtp);
       setOtpVerified(true);
@@ -112,7 +107,6 @@ function OtpReset() {
     setLoading(false);
   };
 
-  // 🔐 RESET PASSWORD
   const handleReset = async () => {
     if (!email || !verifiedOtp || !password) {
       setMsg("All fields required ❗");
@@ -153,7 +147,6 @@ function OtpReset() {
         return;
       }
 
-      // ✅ SUCCESS
       setMsg("Password reset successful ✅");
       setPassword("");
       setConfirmPassword("");
@@ -172,7 +165,6 @@ function OtpReset() {
     setLoading(false);
   };
 
-  // 🔁 RESEND OTP
   const handleResend = async () => {
     if (!canResend) return;
 
@@ -218,7 +210,6 @@ function OtpReset() {
 
         {msg && <p style={styles.msg}>{msg}</p>}
 
-        {/* OTP */}
         {!otpVerified && (
           <div style={styles.otpContainer}>
             {otp.map((digit, index) => (
@@ -237,7 +228,6 @@ function OtpReset() {
           </div>
         )}
 
-        {/* VERIFY + TIMER */}
         {!otpVerified && (
           <>
             <button
@@ -265,7 +255,6 @@ function OtpReset() {
           </>
         )}
 
-        {/* PASSWORD */}
         {otpVerified && (
           <>
             <input
@@ -302,7 +291,6 @@ function OtpReset() {
 
 export default OtpReset;
 
-// 🎨 STYLES
 const styles = {
   container: {
     height: "100vh",

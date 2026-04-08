@@ -10,7 +10,7 @@ const taskSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "completed"],
+      enum: ["pending", "in-progress", "completed"],
       default: "pending"
     },
 
@@ -24,7 +24,6 @@ const taskSchema = new mongoose.Schema(
       type: Date
     },
 
-    // 🔐 VERY IMPORTANT (links task to logged-in user)
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -32,7 +31,7 @@ const taskSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true // adds createdAt & updatedAt
+    timestamps: true 
   }
 );
 

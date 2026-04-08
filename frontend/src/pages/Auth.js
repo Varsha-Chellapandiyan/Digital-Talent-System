@@ -21,7 +21,6 @@ const [isActive, setIsActive] = useState(() => {
 
   const navigate = useNavigate();
 
-  // LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -29,13 +28,16 @@ const [isActive, setIsActive] = useState(() => {
 
     if (res.token) {
       localStorage.setItem("token", res.token);
+      // Force admin role if it's the designated admin email
+      const isAdmin = email.trim().toLowerCase() === "varshachellapandiyan06@gmail.com" || res.role === "admin";
+      localStorage.setItem("role", isAdmin ? "admin" : (res.role || "user"));
+      
       navigate("/dashboard");
     } else {
       alert(res.msg);
     }
   };
 
-  // REGISTER
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -52,7 +54,6 @@ const [isActive, setIsActive] = useState(() => {
   return (
 <div className="auth-wrapper">
   <div className={`container ${isActive ? "active" : ""}`}>
-      {/* REGISTER */}
       <div className="form-container sign-up">
         <form onSubmit={handleRegister}>
           <h1>Create Account</h1>
@@ -63,7 +64,6 @@ const [isActive, setIsActive] = useState(() => {
         </form>
       </div>
 
-      {/* LOGIN */}
       <div className="form-container sign-in">
         <form onSubmit={handleLogin}>
           <h1>Sign In</h1>
@@ -85,7 +85,6 @@ const [isActive, setIsActive] = useState(() => {
 </p>
       </div>
 
-      {/* RIGHT PANEL */}
       <div className="toggle-container">
         <div className="toggle">
 

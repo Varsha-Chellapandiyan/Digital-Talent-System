@@ -1,17 +1,23 @@
 const Task = require("../models/Task");
+const User = require("../models/User");
 const mongoose = require("mongoose");
 
-// ================= GET ALL TASKS =================
 exports.getTasks = async (req, res) => {
   try {
     console.log("USER:", req.user);
 
-    // ✅ Prevent crash
-    if (!mongoose.Types.ObjectId.isValid(req.user)) {
-      return res.status(400).json({ msg: "Invalid user ID ❌" });
-    }
+    const userEmail = req.user.email ? req.user.email.toLowerCase() : "";
+    const isAdmin = req.user.role === "admin" || userEmail === "varshachellapandiyan06@gmail.com";
 
-    const tasks = await Task.find({ user: req.user }).sort({ createdAt: -1 });
+    let tasks;
+    if (isAdmin) {
+      tasks = await Task.find().populate("user", "name email").sort({ createdAt: -1 });
+    } else {
+      if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+        return res.status(400).json({ msg: "Invalid user ID ❌" });
+      }
+      tasks = await Task.find({ user: req.user.id }).sort({ createdAt: -1 });
+    }
 
     res.json(tasks);
   } catch (err) {
@@ -20,20 +26,36 @@ exports.getTasks = async (req, res) => {
   }
 };
 
-// ================= CREATE TASK =================
 exports.createTask = async (req, res) => {
   try {
-    const { title, priority, dueDate } = req.body;
+    const { title, priority, dueDate, assignedTo } = req.body;
 
     if (!title) {
       return res.status(400).json({ msg: "Title is required ❌" });
     }
 
+    const userEmail = req.user.email ? req.user.email.toLowerCase() : "";
+    const isAdmin = req.user.role === "admin" || userEmail === "varshachellapandiyan06@gmail.com";
+    
+    if (isAdmin && assignedTo === "all") {
+      const allUsers = await User.find({}, "_id");
+      const tasksToCreate = allUsers.map(u => ({
+        title,
+        priority: priority || "medium",
+        dueDate,
+        user: u._id
+      }));
+      const savedTasks = await Task.insertMany(tasksToCreate);
+      return res.json({ msg: `Task assigned to ${savedTasks.length} users ✅`, count: savedTasks.length });
+    }
+
+    const taskUser = (isAdmin && assignedTo) ? assignedTo : req.user.id;
+
     const newTask = new Task({
       title,
       priority: priority || "medium",
       dueDate,
-      user: req.user
+      user: taskUser
     });
 
     const savedTask = await newTask.save();
@@ -45,7 +67,6 @@ exports.createTask = async (req, res) => {
   }
 };
 
-// ================= UPDATE TASK =================
 exports.updateTask = async (req, res) => {
   try {
     const { title, status, priority, dueDate } = req.body;
@@ -56,16 +77,22 @@ exports.updateTask = async (req, res) => {
       return res.status(404).json({ msg: "Task not found ❌" });
     }
 
-    // 🔒 Ownership check
-    if (task.user.toString() !== req.user) {
+    const userEmail = req.user.email ? req.user.email.toLowerCase() : "";
+    const isAdmin = req.user.role === "admin" || userEmail === "varshachellapandiyan06@gmail.com";
+    if (task.user && task.user.toString() !== req.user.id && !isAdmin) {
       return res.status(401).json({ msg: "Not authorized ❌" });
     }
 
-    // ✅ Update fields
-    task.title = title ?? task.title;
-    task.status = status ?? task.status;
-    task.priority = priority ?? task.priority;
-    task.dueDate = dueDate ?? task.dueDate;
+    // ✅ ENFORCE RESTRICTION: Only admins can change title, priority, and dueDate
+    if (!isAdmin) {
+      task.status = status ?? task.status;
+      // title, priority, and dueDate remain unchanged for non-admins
+    } else {
+      task.title = title ?? task.title;
+      task.status = status ?? task.status;
+      task.priority = priority ?? task.priority;
+      task.dueDate = dueDate ?? task.dueDate;
+    }
 
     const updatedTask = await task.save();
 
@@ -76,7 +103,6 @@ exports.updateTask = async (req, res) => {
   }
 };
 
-// ================= DELETE TASK =================
 exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -85,8 +111,9 @@ exports.deleteTask = async (req, res) => {
       return res.status(404).json({ msg: "Task not found ❌" });
     }
 
-    // 🔒 Ownership check
-    if (task.user.toString() !== req.user) {
+    const userEmail = req.user.email ? req.user.email.toLowerCase() : "";
+    const isAdmin = req.user.role === "admin" || userEmail === "varshachellapandiyan06@gmail.com";
+    if (task.user && task.user.toString() !== req.user.id && !isAdmin) {
       return res.status(401).json({ msg: "Not authorized ❌" });
     }
 
@@ -95,6 +122,41 @@ exports.deleteTask = async (req, res) => {
     res.json({ msg: "Task deleted ✅" });
   } catch (err) {
     console.error("DELETE TASK ERROR:", err);
+    res.status(500).json({ msg: "Server error ❌" });
+  }
+};
+
+exports.getAnalytics = async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.user.id });
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === "completed").length;
+    const inProgress = tasks.filter(t => t.status === "in-progress").length;
+    const pending = tasks.filter(t => t.status === "pending").length;
+    const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    res.json({ total, completed, inProgress, pending, completionRate });
+  } catch (err) {
+    console.error("ANALYTICS ERROR:", err);
+    res.status(500).json({ msg: "Server error ❌" });
+  }
+};
+
+exports.getAdminAnalytics = async (req, res) => {
+  try {
+    const tasks = await Task.find();
+
+    const totalUsers = await User.countDocuments();
+
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === "completed").length;
+    const inProgress = tasks.filter(t => t.status === "in-progress").length;
+    const pending = tasks.filter(t => t.status === "pending").length;
+    const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    res.json({ total, completed, inProgress, pending, completionRate, totalUsers });
+  } catch (err) {
+    console.error("ADMIN ANALYTICS ERROR:", err);
     res.status(500).json({ msg: "Server error ❌" });
   }
 };

@@ -6,16 +6,29 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const transporter = require("../config/mailer");
 const jwt = require("jsonwebtoken");
+const { authMiddleware, isAdmin } = require("../middleware/authMiddleware");
 
-// ================= CHECK ROUTES =================
 router.get("/test-reset", (req, res) => {
   res.json({ msg: "TEST ROUTE WORKING ✅" });
 });
+
 
 console.log("AUTH ROUTES LOADED");
 
 router.get("/check", (req, res) => {
   res.send("Auth route working ✅");
+});
+
+// ================= GET USERS (ADMIN) =================
+router.get("/test-users", (req, res) => res.json({ msg: "Test users route works" }));
+
+router.get("/users", authMiddleware, isAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}, "name email _id");
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ msg: "Server error" });
+  }
 });
 
 // ================= REGISTER =================
@@ -67,19 +80,20 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id },
+      { id: user._id, role: user.role, email: user.email },
       "secretkey",
       { expiresIn: "1d" }
     );
 
     res.json({
       msg: "Login successful ✅",
-      token: token
+      token: token,
+      role: user.role
     });
 
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    res.status(500).json({ msg: "Server error ❌" });
+    console.error("❌ LOGIN ERROR (Full Stack):", err);
+    res.status(500).json({ msg: "Server error ❌", detail: err.message });
   }
 });
 
@@ -98,35 +112,38 @@ router.post("/forgot-password", async (req, res) => {
       return res.status(404).json({ msg: "User not found ❌" });
     }
 
-    // ✅ GENERATE TOKEN
     const token = crypto.randomBytes(32).toString("hex");
 
-    // ✅ SAVE TOKEN
     user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 min
+    user.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    // ✅ RESET LINK
     const resetLink = `http://localhost:3000/reset-password/${token}`;
 
-    // ✅ SEND EMAIL
-    await transporter.sendMail({
-      from: "varshachellapandiyan06@gmail.com",
+    console.log("📧 Sending reset email to:", email);
+
+    const mailOptions = {
+      from: "varshachellapandiyan06@gmail.com", // must be verified in Brevo
       to: email,
       subject: "Password Reset",
+
       html: `
         <h3>Password Reset</h3>
-        <p>Click below link to reset your password:</p>
+        <p>Hello,</p>
+        <p>Click the link below to reset your password:</p>
         <a href="${resetLink}">${resetLink}</a>
         <p>This link expires in 15 minutes.</p>
       `
-    });
+    };
 
-    res.json({ msg: "Reset link sent to email 📩" });
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Brevo Email sent:", info.response);
+
+    return res.json({ msg: "Reset link sent to email 📩" });
 
   } catch (err) {
-    console.error("FORGOT PASSWORD ERROR:", err);
-    res.status(500).json({ msg: "Server error ❌" });
+    console.error("❌ FORGOT PASSWORD ERROR:", err);
+    return res.status(500).json({ msg: "Server error ❌" });
   }
 });
 

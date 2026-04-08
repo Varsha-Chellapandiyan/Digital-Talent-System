@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { getTasks } from "../services/taskService";
+import { getAnalytics, getAdminAnalytics } from "../services/taskService";
 import toast, { Toaster } from "react-hot-toast";
 import { ThemeContext } from "../context/ThemeContext";
 
@@ -8,36 +8,37 @@ function Dashboard() {
   const navigate = useNavigate();
   const { darkMode, setDarkMode } = useContext(ThemeContext);
 
-  const [tasks, setTasks] = useState([]);
+  const [stats, setStats] = useState({ total: 0, completed: 0, inProgress: 0, pending: 0, completionRate: 0, totalUsers: 0 });
   const [loading, setLoading] = useState(true);
+  const role = localStorage.getItem("role") || "user";
 
-  // 🔐 AUTH CHECK
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) navigate("/"); // ✅ FIXED
   }, [navigate]);
 
-  // 📡 LOAD TASKS
-  const loadTasks = useCallback(async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getTasks();
-      setTasks(res?.data || []);
+      if (role === "admin") {
+        const res = await getAdminAnalytics();
+        setStats(res.data);
+      } else {
+        const res = await getAnalytics();
+        setStats(res.data);
+      }
     } catch {
-      toast.error("Failed to load tasks ❌");
+      toast.error("Failed to load analytics ❌");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [role]);
 
   useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+    loadStats();
+  }, [loadStats]);
 
-  // 📊 STATS
-  const total = tasks.length;
-  const completed = tasks.filter((t) => t.status === "completed").length;
-  const pending = total - completed;
+  const { total, completed, inProgress, pending, completionRate, totalUsers } = stats;
 
   if (loading) return <h2 style={{ padding: 20 }}>Loading...</h2>;
 
@@ -47,7 +48,6 @@ function Dashboard() {
     <div style={{ ...styles.container, background: theme.bg, color: theme.text }}>
       <Toaster />
 
-      {/* SIDEBAR */}
       <div style={{ ...styles.sidebar, background: theme.sidebar }}>
         <h2 style={{ marginBottom: 20 }}>🚀 TaskPro</h2>
 
@@ -76,9 +76,7 @@ function Dashboard() {
         </button>
       </div>
 
-      {/* MAIN */}
       <div style={styles.main}>
-        {/* HEADER */}
         <div style={styles.header}>
           <h1>Dashboard</h1>
 
@@ -90,13 +88,12 @@ function Dashboard() {
           </button>
         </div>
 
-        {/* WELCOME */}
         <div style={styles.welcome}>
           <h2>Welcome back 👋</h2>
-          <p>Here’s your task overview</p>
+          <p>{role === "admin" ? "System-wide overview" : "Here’s your task overview"}</p>
         </div>
 
-        {/* STATS */}
+        
         <div style={styles.statsGrid}>
           <div style={{ ...styles.statCard, background: theme.card }}>
             📌 Total <br /><b>{total}</b>
@@ -105,10 +102,24 @@ function Dashboard() {
           <div style={{ ...styles.statCard, background: theme.card }}>
             ✅ Completed <br /><b>{completed}</b>
           </div>
+          
+          <div style={{ ...styles.statCard, background: "rgba(126, 34, 206, 0.1)", color: "#7e22ce" }}>
+            🚀 In Progress <br /><b>{inProgress}</b>
+          </div>
 
           <div style={{ ...styles.statCard, background: theme.card }}>
             ⏳ Pending <br /><b>{pending}</b>
           </div>
+          
+          <div style={{ ...styles.statCard, background: theme.card }}>
+            📈 Rate <br /><b>{completionRate}%</b>
+          </div>
+
+          {role === "admin" && (
+            <div style={{ ...styles.statCard, background: theme.card }}>
+              👥 Total Users <br /><b>{totalUsers}</b>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -117,7 +128,7 @@ function Dashboard() {
 
 export default Dashboard;
 
-// 🎨 THEMES
+
 const light = {
   bg: "#f8fafc",
   text: "#000",
@@ -132,7 +143,7 @@ const dark = {
   card: "#0f172a"
 };
 
-// 🎨 STYLES
+
 const styles = {
   container: {
     display: "flex",
@@ -142,8 +153,8 @@ const styles = {
 
   sidebar: {
     width: 240,
-    height: "100vh",          // ✅ FULL HEIGHT
-    position: "fixed",        // ✅ FIXED SIDEBAR
+    height: "100vh",          
+    position: "fixed",        
     left: 0,
     top: 0,
     color: "#fff",
@@ -170,7 +181,7 @@ const styles = {
 
   main: {
     flex: 1,
-    marginLeft: 240,          // ✅ SPACE FOR SIDEBAR
+    marginLeft: 240,          
     padding: 30,
     minHeight: "100vh"
   },
@@ -195,7 +206,7 @@ const styles = {
 
   statsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3,1fr)",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 20
   },
 

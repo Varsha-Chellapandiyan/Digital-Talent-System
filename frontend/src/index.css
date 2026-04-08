@@ -9,8 +9,7 @@ body {
     'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
     'Helvetica Neue', sans-serif;
 
-  /* 🔥 FIX WHITE BLINK */
-  background-color: #020617;  /* dark default */
+  background-color: #020617;  
   transition: background-color 0.3s ease;
 }
 

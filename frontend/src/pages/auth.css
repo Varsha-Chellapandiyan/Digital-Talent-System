@@ -1,4 +1,3 @@
-/* RESET */
 * {
   margin: 0;
   padding: 0;
@@ -6,12 +5,10 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* BODY FIX */
 body {
   overflow-x: hidden;
 }
 
-/* WRAPPER */
 .auth-wrapper {
   display: flex;
   justify-content: center;
@@ -22,7 +19,6 @@ body {
   overflow: hidden;
 }
 
-/* MAIN CONTAINER */
 .container {
   background: #fff;
   border-radius: 20px;
@@ -34,7 +30,6 @@ body {
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
 
-/* FORM CONTAINER */
 .form-container {
   position: absolute;
   top: 0;
@@ -44,13 +39,11 @@ body {
   transition: all 0.6s ease-in-out;
 }
 
-/* SIGN IN */
 .sign-in {
   left: 0;
   z-index: 2;
 }
 
-/* SIGN UP */
 .sign-up {
   left: 50%;
   opacity: 0;
@@ -58,7 +51,6 @@ body {
   pointer-events: none;
 }
 
-/* 🔥 ANIMATION FIX */
 .container.active .sign-in {
   transform: translateX(100%);
   opacity: 0;
@@ -72,7 +64,6 @@ body {
   pointer-events: auto;
 }
 
-/* FORM STYLE */
 form {
   background: #ffffff;
   display: flex;
@@ -84,7 +75,6 @@ form {
   text-align: center;
 }
 
-/* INPUT */
 input {
   background: #eee;
   border: none;
@@ -94,7 +84,6 @@ input {
   border-radius: 8px;
 }
 
-/* BUTTON */
 button {
   border-radius: 20px;
   border: none;
@@ -106,7 +95,6 @@ button {
   margin-top: 10px;
 }
 
-/* FORGOT PASSWORD */
 .forgot {
   margin-top: 10px;
   color: blue;
@@ -114,7 +102,6 @@ button {
   font-size: 14px;
 }
 
-/* TOGGLE CONTAINER */
 .toggle-container {
   position: absolute;
   top: 0;
@@ -128,7 +115,6 @@ button {
   z-index: 2; 
 }
 
-/* SLIDING PANEL */
 .toggle {
   background: linear-gradient(to right, #ff4b2b, #ff416c);
   height: 100%;
@@ -138,12 +124,10 @@ button {
   transition: transform 0.6s ease-in-out;
 }
 
-/* 🔥 FIX: smooth sliding */
 .container.active .toggle {
   transform: translateX(50%);
 }
 
-/* PANEL CONTENT */
 .toggle-panel {
   position: absolute;
   width: 50%;
@@ -157,22 +141,18 @@ button {
   color: white;
 }
 
-/* LEFT PANEL */
 .toggle-left {
   transform: translateX(-200%);
 }
 
-/* 🔥 FIX */
 .container.active .toggle-left {
   transform: translateX(0);
 }
 
-/* RIGHT PANEL */
 .toggle-right {
   right: 0;
 }
 
-/* TEXT */
 h1 {
   font-size: 24px;
   margin-bottom: 10px;
@@ -183,7 +163,6 @@ p {
   margin: 10px 0;
 }
 
-/* 🔥 MOBILE FIX */
 @media (max-width: 768px) {
   .container {
     width: 100%;

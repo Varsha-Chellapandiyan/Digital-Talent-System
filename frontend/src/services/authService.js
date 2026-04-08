@@ -1,6 +1,5 @@
 const API = "http://localhost:4000/api/auth";
 
-// REGISTER
 export const registerUser = async (userData) => {
   const res = await fetch(`${API}/register`, {
     method: "POST",
@@ -13,7 +12,6 @@ export const registerUser = async (userData) => {
   return res.json();
 };
 
-// LOGIN
 export const loginUser = async (userData) => {
   const res = await fetch(`${API}/login`, {
     method: "POST",

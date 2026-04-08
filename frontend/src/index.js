@@ -5,7 +5,6 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ThemeProvider } from "./context/ThemeContext";
 
-// 🔥 APPLY THEME BEFORE REACT LOADS
 const savedTheme = localStorage.getItem("darkMode");
 
 if (savedTheme === "true") {
