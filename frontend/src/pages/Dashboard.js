@@ -14,7 +14,7 @@ function Dashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) navigate("/"); // ✅ FIXED
+    if (!token) navigate("/");
   }, [navigate]);
 
   const loadStats = useCallback(async () => {
@@ -69,7 +69,7 @@ function Dashboard() {
           style={styles.logout}
           onClick={() => {
             localStorage.clear();
-            navigate("/"); // ✅ FIXED
+            navigate("/");
           }}
         >
           Logout
@@ -93,7 +93,7 @@ function Dashboard() {
           <p>{role === "admin" ? "System-wide overview" : "Here’s your task overview"}</p>
         </div>
 
-        
+
         <div style={styles.statsGrid}>
           <div style={{ ...styles.statCard, background: theme.card }}>
             📌 Total <br /><b>{total}</b>
@@ -102,7 +102,7 @@ function Dashboard() {
           <div style={{ ...styles.statCard, background: theme.card }}>
             ✅ Completed <br /><b>{completed}</b>
           </div>
-          
+
           <div style={{ ...styles.statCard, background: "rgba(126, 34, 206, 0.1)", color: "#7e22ce" }}>
             🚀 In Progress <br /><b>{inProgress}</b>
           </div>
@@ -110,7 +110,7 @@ function Dashboard() {
           <div style={{ ...styles.statCard, background: theme.card }}>
             ⏳ Pending <br /><b>{pending}</b>
           </div>
-          
+
           <div style={{ ...styles.statCard, background: theme.card }}>
             📈 Rate <br /><b>{completionRate}%</b>
           </div>
@@ -153,8 +153,8 @@ const styles = {
 
   sidebar: {
     width: 240,
-    height: "100vh",          
-    position: "fixed",        
+    height: "100vh",
+    position: "fixed",
     left: 0,
     top: 0,
     color: "#fff",
@@ -181,7 +181,7 @@ const styles = {
 
   main: {
     flex: 1,
-    marginLeft: 240,          
+    marginLeft: 240,
     padding: 30,
     minHeight: "100vh"
   },
@@ -217,7 +217,6 @@ const styles = {
   }
 };
 
-// 🔗 ACTIVE LINK STYLE
 const linkStyle = (isActive) => ({
   textDecoration: "none",
   padding: "8px 10px",

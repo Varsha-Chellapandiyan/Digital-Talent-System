@@ -95,7 +95,7 @@ function Tasks() {
       const res = await createTask(payload);
       if (payload.assignedTo === "all") {
         toast.success(res.data.msg);
-        loadTasks(); // reload because multiple tasks were created
+        loadTasks();
       } else {
         setTasks([res.data, ...tasks]);
       }

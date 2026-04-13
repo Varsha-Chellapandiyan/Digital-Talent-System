@@ -1,6 +1,7 @@
 const Task = require("../models/Task");
 const User = require("../models/User");
 const mongoose = require("mongoose");
+const transporter = require("../config/mailer");
 
 exports.getTasks = async (req, res) => {
   try {
@@ -38,7 +39,7 @@ exports.createTask = async (req, res) => {
     const isAdmin = req.user.role === "admin" || userEmail === "varshachellapandiyan06@gmail.com";
     
     if (isAdmin && assignedTo === "all") {
-      const allUsers = await User.find({}, "_id");
+      const allUsers = await User.find({}, "_id email name"); // Fetch emails and names
       const tasksToCreate = allUsers.map(u => ({
         title,
         priority: priority || "medium",
@@ -46,6 +47,25 @@ exports.createTask = async (req, res) => {
         user: u._id
       }));
       const savedTasks = await Task.insertMany(tasksToCreate);
+
+      // 📧 Send email to all users
+      allUsers.forEach(u => {
+        const mailOptions = {
+          from: process.env.EMAIL_USER || "varshachellapandiyan06@gmail.com",
+          to: u.email,
+          subject: "🚀 New Task Assigned: " + title,
+          html: `
+            <h3>Hello ${u.name},</h3>
+            <p>A new task has been assigned to you by the Admin.</p>
+            <p><b>Title:</b> ${title}</p>
+            <p><b>Due Date:</b> ${dueDate ? new Date(dueDate).toLocaleDateString() : "No date set"}</p>
+            <p><b>Priority:</b> ${priority.toUpperCase()}</p>
+            <p>Please log in to your dashboard to view more details.</p>
+          `
+        };
+        transporter.sendMail(mailOptions).catch(err => console.error("EMAIL ALL ERROR:", err));
+      });
+
       return res.json({ msg: `Task assigned to ${savedTasks.length} users ✅`, count: savedTasks.length });
     }
 
@@ -59,6 +79,27 @@ exports.createTask = async (req, res) => {
     });
 
     const savedTask = await newTask.save();
+
+    // 📧 Send email to the assigned user if assigned by admin
+    if (isAdmin && assignedTo) {
+      const assignedUser = await User.findById(assignedTo);
+      if (assignedUser && assignedUser.email) {
+        const mailOptions = {
+          from: process.env.EMAIL_USER || "varshachellapandiyan06@gmail.com",
+          to: assignedUser.email,
+          subject: "🚀 New Task Assigned: " + title,
+          html: `
+            <h3>Hello ${assignedUser.name},</h3>
+            <p>A new task has been assigned to you by the Admin.</p>
+            <p><b>Title:</b> ${title}</p>
+            <p><b>Due Date:</b> ${dueDate ? new Date(dueDate).toLocaleDateString() : "No date set"}</p>
+            <p><b>Priority:</b> ${priority.toUpperCase()}</p>
+            <p>Please log in to your dashboard to view more details.</p>
+          `
+        };
+        transporter.sendMail(mailOptions).catch(err => console.error("EMAIL SINGLE ERROR:", err));
+      }
+    }
 
     res.json(savedTask);
   } catch (err) {

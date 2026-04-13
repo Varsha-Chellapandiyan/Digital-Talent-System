@@ -123,7 +123,7 @@ router.post("/forgot-password", async (req, res) => {
     console.log("📧 Sending reset email to:", email);
 
     const mailOptions = {
-      from: "varshachellapandiyan06@gmail.com", // must be verified in Brevo
+      from: process.env.EMAIL_USER || "varshachellapandiyan06@gmail.com",
       to: email,
       subject: "Password Reset",
 
@@ -136,8 +136,10 @@ router.post("/forgot-password", async (req, res) => {
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Brevo Email sent:", info.response);
+    // 📧 Send reset link (Non-blocking to prevent server error on mail failure)
+    transporter.sendMail(mailOptions)
+      .then(info => console.log("✅ Reset Link Email sent:", info.response))
+      .catch(err => console.error("❌ Reset Link Email ERROR:", err));
 
     return res.json({ msg: "Reset link sent to email 📩" });
 
@@ -199,12 +201,15 @@ router.post("/send-otp", async (req, res) => {
     user.otpExpiry = Date.now() + 300000;
     await user.save();
 
-    await transporter.sendMail({
-      from: "varshachellapandiyan06@gmail.com",
+    // 📧 Send OTP (Non-blocking)
+    transporter.sendMail({
+      from: process.env.EMAIL_USER || "varshachellapandiyan06@gmail.com",
       to: email,
       subject: "Your OTP Code",
       text: `Your OTP is: ${otp}`
-    });
+    })
+    .then(info => console.log("✅ OTP Email sent:", info.response))
+    .catch(err => console.error("❌ OTP Email ERROR:", err));
 
     res.json({ msg: "OTP sent successfully ✅" });
 
