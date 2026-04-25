@@ -11,24 +11,16 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// ✅ DEBUG LOGGER (VERY IMPORTANT)
-app.use((req, res, next) => {
-  console.log(`📡 ${req.method} ${req.url}`);
-  next();
-});
+// Logging removed for production
 
 // ✅ ROUTES
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
-console.log("AUTH ROUTE FILE:", require.resolve("./routes/authRoutes"));
 
 const taskRoutes = require("./routes/taskRoutes");
 app.use("/api/tasks", taskRoutes);
 
 
-// 🔥 ADD THIS EXACTLY HERE
-const fs = require("fs");
-console.log("FILES INSIDE ROUTES:", fs.readdirSync("./routes"));
 // ✅ ROOT TEST
 app.get("/", (req, res) => {
   res.send("Server running ✅");
@@ -47,6 +39,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(4000, () => {
-  console.log("🚀 Server running on http://localhost:4000");
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });

@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API = "http://localhost:4000/api/tasks";
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API = `${API_BASE}/api/tasks`;
 
 const getAuthHeader = () => ({
   headers: {
@@ -33,5 +34,5 @@ export const getAdminAnalytics = async () => {
 };
 
 export const getUsers = async () => {
-  return await axios.get(`http://localhost:4000/api/auth/users`, getAuthHeader());
+  return await axios.get(`${API_BASE}/api/auth/users`, getAuthHeader());
 };

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import "./auth.css";
 
 function OtpReset() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -11,7 +12,7 @@ function OtpReset() {
   const [verifiedOtp, setVerifiedOtp] = useState("");
   const [shake, setShake] = useState(false);
 
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
 
   const inputsRef = useRef([]);
@@ -40,7 +41,7 @@ function OtpReset() {
   const handleChange = (value, index) => {
     if (!/^[0-9]?$/.test(value)) return;
 
-    setMsg(""); // 🔥 clear error while typing
+    setMsg(""); 
 
     const newOtp = [...otp];
     newOtp[index] = value;
@@ -51,7 +52,6 @@ function OtpReset() {
     }
   };
 
-  
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && otp[index] === "" && index > 0) {
       inputsRef.current[index - 1].focus();
@@ -75,7 +75,8 @@ function OtpReset() {
     setMsg("");
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/verify-otp", {
+      const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -127,7 +128,8 @@ function OtpReset() {
     setMsg("");
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/reset-password-otp", {
+      const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      const res = await fetch(`${API_BASE}/api/auth/reset-password-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -168,7 +170,7 @@ function OtpReset() {
   const handleResend = async () => {
     if (!canResend) return;
 
-    if (!email) {  // 🔥 FIX
+    if (!email) {  
       setMsg("Email missing ❗");
       return;
     }
@@ -176,7 +178,8 @@ function OtpReset() {
     setMsg("");
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/send-otp", {
+      const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -193,7 +196,7 @@ function OtpReset() {
 
       setMsg("🔁 OTP resent");
 
-      setTimer(60);
+      setTimer(30);
       setCanResend(false);
       setOtp(["", "", "", "", "", ""]);
       inputsRef.current[0]?.focus();
@@ -204,140 +207,110 @@ function OtpReset() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={{ ...styles.card, ...(shake ? styles.shake : {}) }}>
-        <h2>OTP Verification</h2>
+    <div className="auth-wrapper">
+      <div className={`auth-card ${shake ? "shake" : ""}`} style={{ padding: '60px 40px' }}>
+        <div className="auth-logo-circle">
+          <span>OTP</span>
+        </div>
+        <h2 style={{ marginBottom: '10px' }}>Verify Identity</h2>
+        <p style={{ marginBottom: '30px', color: 'rgba(255,255,255,0.7)' }}>
+            We've sent a 6-digit code to your email.
+        </p>
 
-        {msg && <p style={styles.msg}>{msg}</p>}
-
-        {!otpVerified && (
-          <div style={styles.otpContainer}>
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                type="text"               // 🔥 FIX
-                inputMode="numeric"      // 🔥 FIX
-                ref={(el) => (inputsRef.current[index] = el)}
-                value={digit}
-                maxLength="1"
-                onChange={(e) => handleChange(e.target.value, index)}
-                onKeyDown={(e) => handleKeyDown(e, index)}
-                style={styles.otpBox}
-              />
-            ))}
+        {msg && (
+          <div className={`auth-msg ${msg.includes("❌") || msg.includes("❗") ? "auth-msg-error" : "auth-msg-success"}`}>
+             {msg.includes("❌") || msg.includes("❗") ? "⚠️" : "✨"} {msg}
           </div>
         )}
 
         {!otpVerified && (
           <>
+            <div className="otp-box-container" style={{ marginBottom: '30px' }}>
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  inputMode="numeric"
+                  ref={(el) => (inputsRef.current[index] = el)}
+                  value={digit}
+                  maxLength="1"
+                  onChange={(e) => handleChange(e.target.value, index)}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
+                  className="otp-box"
+                />
+              ))}
+            </div>
+
             <button
-              style={styles.button}
+              className="auth-button"
               onClick={handleVerifyOtp}
-              disabled={loading}   // 🔥 FIX
+              disabled={loading}
+              style={{ marginBottom: '20px' }}
             >
-              {loading ? "Verifying..." : "Verify OTP"}
+              {loading ? "Verifying..." : "Verify OTP Code"}
             </button>
 
-            <p style={{ textAlign: "center" }}>
-              {timer > 0 ? `Resend OTP in ${timer}s` : "You can resend OTP"}
-            </p>
+            <div style={{ textAlign: 'center' }}>
+                <p style={{ marginBottom: '15px', color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>
+                  {timer > 0 ? `Resend available in ${timer}s` : "Didn't receive code?"}
+                </p>
 
-            <button
-              onClick={handleResend}
-              disabled={!canResend}
-              style={{
-                ...styles.button,
-                background: canResend ? "#007bff" : "gray"
-              }}
-            >
-              Resend OTP
-            </button>
+                <button
+                  onClick={handleResend}
+                  disabled={!canResend}
+                  className="auth-button"
+                  style={{ 
+                      background: 'transparent', 
+                      border: '1px solid rgba(255,255,255,0.3)', 
+                      color: 'white',
+                      opacity: canResend ? 1 : 0.5,
+                      textTransform: 'none',
+                      fontSize: '14px',
+                      padding: '10px 20px'
+                  }}
+                >
+                  Resend OTP
+                </button>
+            </div>
           </>
         )}
 
         {otpVerified && (
           <>
-            <input
-              type="password"
-              placeholder="Enter new password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
-              autoComplete="new-password" // 🔥 FIX
-            />
+            <div className="auth-input-group" style={{ marginBottom: '15px' }}>
+              <input
+                type="password"
+                placeholder="New Secure Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="auth-input"
+                autoComplete="new-password"
+              />
+            </div>
 
-            <input
-              type="password"
-              placeholder="Confirm password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              style={styles.input}
-              autoComplete="new-password"
-            />
+            <div className="auth-input-group" style={{ marginBottom: '25px' }}>
+              <input
+                type="password"
+                placeholder="Confirm New Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="auth-input"
+                autoComplete="new-password"
+              />
+            </div>
 
-            <button style={styles.button} onClick={handleReset}>
-              {loading ? "Processing..." : "Reset Password"}
+            <button className="auth-button" onClick={handleReset}>
+              {loading ? "Updating..." : "Update Password"}
             </button>
           </>
         )}
 
-        <p style={styles.back} onClick={() => navigate("/")}>
-          Back to Login
+        <p className="auth-link" style={{ marginTop: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => navigate("/")}>
+          <span>←</span> Back to Login
         </p>
       </div>
     </div>
   );
 }
 
-export default OtpReset;
-
-const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#232526"
-  },
-  card: {
-    width: "350px",
-    padding: "25px",
-    background: "#fff",
-    borderRadius: "10px"
-  },
-  otpContainer: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "10px"
-  },
-  otpBox: {
-    width: "40px",
-    height: "40px",
-    textAlign: "center"
-  },
-  input: {
-    width: "93%",
-    padding: "10px",
-    marginBottom: "10px"
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px",
-    background: "green",
-    color: "#fff",
-    border: "none"
-  },
-  msg: {
-    textAlign: "center",
-    color: "green"
-  },
-  back: {
-    textAlign: "center",
-    color: "blue",
-    cursor: "pointer"
-  },
-  shake: {
-    animation: "shake 0.3s"
-  }
-};
+export default OtpReset;

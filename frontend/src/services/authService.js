@@ -1,4 +1,5 @@
-const API = "http://localhost:4000/api/auth";
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API = `${API_BASE}/api/auth`;
 
 export const registerUser = async (userData) => {
   const res = await fetch(`${API}/register`, {

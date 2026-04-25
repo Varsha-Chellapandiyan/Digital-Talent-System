@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./auth.css";
 
 function Login() {
   const navigate = useNavigate();
@@ -68,7 +69,7 @@ function Login() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-        // Force admin role if it's the designated admin email
+        localStorage.setItem("userName", data.name || "User");
         const isAdmin = email.trim().toLowerCase() === "varshachellapandiyan06@gmail.com" || data.role === "admin";
         localStorage.setItem("role", isAdmin ? "admin" : (data.role || "user"));
       }
@@ -93,33 +94,38 @@ function Login() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Welcome Back</h2>
+    <div className="auth-wrapper">
+      <div className="auth-card">
+        <div className="auth-logo-circle">
+          <span>👋</span>
+        </div>
+        <h2>Welcome Back</h2>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {success && <p style={styles.success}>{success}</p>}
+        {error && <div className="auth-msg auth-msg-error">{error}</div>}
+        {success && <div className="auth-msg auth-msg-success">{success}</div>}
 
-        <input
-          name="email"
-          style={styles.input}
-          type="email"
-          placeholder="Enter your email"
-          value={form.email}
-          onChange={handleChange}
-        />
+        <div className="auth-input-group">
+          <input
+            name="email"
+            className="auth-input"
+            type="email"
+            placeholder="Enter your email"
+            value={form.email}
+            onChange={handleChange}
+          />
+        </div>
 
-        <div style={styles.inputWrapper}>
+        <div className="auth-input-group">
           <input
             name="password"
-            style={styles.input}
+            className="auth-input"
             type={showPassword ? "text" : "password"}
             placeholder="Enter password"
             value={form.password}
             onChange={handleChange}
           />
           <span
-            style={styles.eye}
+            className="auth-input-eye"
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? "🔓" : "🔒"}
@@ -127,23 +133,20 @@ function Login() {
         </div>
 
         <button
-          style={{
-            ...styles.button,
-            opacity: loading || !form.email || !form.password ? 0.7 : 1
-          }}
+          className="auth-button"
           onClick={handleLogin}
           disabled={loading || !form.email || !form.password}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <p style={styles.forgot} onClick={() => navigate("/forgot")}>
+        <p className="auth-link" onClick={() => navigate("/forgot-password")} style={{ marginTop: '15px' }}>
           Forgot Password?
         </p>
 
-        <p style={styles.text}>
+        <p style={{ marginTop: '20px', color: 'white' }}>
           Don’t have an account?{" "}
-          <span style={styles.link} onClick={() => navigate("/")}>
+          <span className="auth-link-bold" onClick={() => navigate("/")}>
             Register
           </span>
         </p>
@@ -152,82 +155,4 @@ function Login() {
   );
 }
 
-export default Login;
-
-const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(to right, #232526, #414345)"
-  },
-  card: {
-    width: "350px",
-    padding: "30px",
-    borderRadius: "12px",
-    background: "#fff",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.2)"
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: "15px"
-  },
-  input: {
-    width: "94%",
-    padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc"
-  },
-  inputWrapper: {
-    position: "relative"
-  },
-  eye: {
-    position: "absolute",
-    right: "10px",
-    top: "15%",
-    cursor: "pointer"
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    background: "#5c9412",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer"
-  },
-  forgot: {
-    marginTop: "10px",
-    textAlign: "right",
-    color: "#007bff",
-    cursor: "pointer",
-    fontSize: "13px"
-  },
-  text: {
-    marginTop: "15px",
-    textAlign: "center"
-  },
-  link: {
-    color: "#5c9412",
-    cursor: "pointer",
-    fontWeight: "bold"
-  },
-  error: {
-    background: "#ffe6e6",
-    color: "#d8000c",
-    padding: "8px",
-    borderRadius: "5px",
-    marginBottom: "10px",
-    textAlign: "center"
-  },
-  success: {
-    background: "#e6ffe6",
-    color: "#2e7d32",
-    padding: "8px",
-    borderRadius: "5px",
-    marginBottom: "10px",
-    textAlign: "center"
-  }
-};
+export default Login;

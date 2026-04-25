@@ -6,7 +6,31 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const transporter = require("../config/mailer");
 const jwt = require("jsonwebtoken");
+const os = require("os");
 const { authMiddleware, isAdmin } = require("../middleware/authMiddleware");
+
+const getLocalIp = () => {
+  const interfaces = os.networkInterfaces();
+
+  for (const name of Object.keys(interfaces)) {
+    if (name.toLowerCase().includes('wi-fi') || name.toLowerCase().includes('wlan') || name.toLowerCase().includes('wireless')) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) return iface.address;
+      }
+    }
+  }
+
+  for (const name of Object.keys(interfaces)) {
+    const isVM = name.toLowerCase().includes('vmware') || name.toLowerCase().includes('virtual') || name.toLowerCase().includes('wsl') || name.toLowerCase().includes('veth');
+    if (isVM) continue;
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+};
 
 router.get("/test-reset", (req, res) => {
   res.json({ msg: "TEST ROUTE WORKING ✅" });
@@ -88,7 +112,8 @@ router.post("/login", async (req, res) => {
     res.json({
       msg: "Login successful ✅",
       token: token,
-      role: user.role
+      role: user.role,
+      name: user.name
     });
 
   } catch (err) {
@@ -100,11 +125,13 @@ router.post("/login", async (req, res) => {
 // ================= FORGOT PASSWORD (EMAIL LINK) =================
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { email } = req.body;
+    let { email } = req.body;
 
     if (!email) {
       return res.status(400).json({ msg: "Email required ❗" });
     }
+
+    email = email.trim().toLowerCase();
 
     const user = await User.findOne({ email });
 
@@ -118,12 +145,15 @@ router.post("/forgot-password", async (req, res) => {
     user.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    const resetLink = `http://localhost:3000/reset-password/${token}`;
+    // 🌍 Secure local network IP logic for perfect mobile testing
+    const baseIp = getLocalIp();
+    const fallbackUrl = `http://${baseIp}:3000`;
+    const resetLink = `${process.env.FRONTEND_URL || fallbackUrl}/reset-password/${token}`;
 
     console.log("📧 Sending reset email to:", email);
 
     const mailOptions = {
-      from: process.env.EMAIL_USER || "varshachellapandiyan06@gmail.com",
+      from: `"DTMS ADMIN" <${process.env.EMAIL_USER || "varshachellapandiyan06@gmail.com"}>`,
       to: email,
       subject: "Password Reset",
 
@@ -188,7 +218,9 @@ router.post("/reset-password/:token", async (req, res) => {
 // ================= SEND OTP =================
 router.post("/send-otp", async (req, res) => {
   try {
-    const { email } = req.body;
+    let { email } = req.body;
+
+    email = email?.trim().toLowerCase();
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -203,13 +235,13 @@ router.post("/send-otp", async (req, res) => {
 
     // 📧 Send OTP (Non-blocking)
     transporter.sendMail({
-      from: process.env.EMAIL_USER || "varshachellapandiyan06@gmail.com",
+      from: `"DTMS ADMIN" <${process.env.EMAIL_USER || "varshachellapandiyan06@gmail.com"}>`,
       to: email,
       subject: "Your OTP Code",
       text: `Your OTP is: ${otp}`
     })
-    .then(info => console.log("✅ OTP Email sent:", info.response))
-    .catch(err => console.error("❌ OTP Email ERROR:", err));
+      .then(info => console.log("✅ OTP Email sent:", info.response))
+      .catch(err => console.error("❌ OTP Email ERROR:", err));
 
     res.json({ msg: "OTP sent successfully ✅" });
 
@@ -224,7 +256,7 @@ router.post("/verify-otp", async (req, res) => {
   try {
     let { email, otp } = req.body;
 
-    email = email?.trim();
+    email = email?.trim().toLowerCase();
     otp = String(otp).trim();
 
     if (!email || !otp) {
@@ -260,7 +292,7 @@ router.post("/reset-password-otp", async (req, res) => {
 
     let { email, otp, password } = req.body;
 
-    email = email?.trim();
+    email = email?.trim().toLowerCase();
     otp = String(otp).trim();
     password = password?.trim();
 

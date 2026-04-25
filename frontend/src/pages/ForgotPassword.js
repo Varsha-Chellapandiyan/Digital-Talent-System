@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./auth.css";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState(""); // 🔥 NEW (email or otp)
+  const [mode, setMode] = useState("");
 
   const navigate = useNavigate();
 
@@ -19,7 +20,8 @@ function ForgotPassword() {
     try {
       localStorage.setItem("resetEmail", email);
 
-      const res = await fetch("http://localhost:4000/api/auth/send-otp", {
+      const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ email })
@@ -48,7 +50,8 @@ function ForgotPassword() {
     setMsg("");
 
     try {
-      const res = await fetch("http://127.0.0.1:4000/api/auth/forgot-password", {
+      const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ email })
@@ -68,83 +71,56 @@ function ForgotPassword() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2>Forgot Password</h2>
+    <div className="auth-wrapper">
+      <div className="auth-card" style={{ padding: '60px 40px' }}>
+        <div className="auth-logo-circle">
+          <span>OTP</span>
+        </div>
+        <h2 style={{ marginBottom: '10px' }}>Forgot Password</h2>
+        <p style={{ marginBottom: '30px', color: 'rgba(255,255,255,0.7)' }}>
+            Enter your registered email to receive a reset link or OTP.
+        </p>
 
         {msg && (
-          <p style={{
-            color: msg.includes("❌") ? "red" : "green"
-          }}>
-            {msg}
-          </p>
+          <div className={`auth-msg ${msg.includes("❌") || msg.includes("❗") ? "auth-msg-error" : "auth-msg-success"}`}>
+            {msg.includes("❌") || msg.includes("❗") ? "⚠️" : "✨"} {msg}
+          </div>
         )}
 
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e)=>setEmail(e.target.value)}
-          style={styles.input}
-        />
+        <div className="auth-input-group" style={{ marginBottom: '25px' }}>
+          <input
+            type="email"
+            placeholder="example@company.com"
+            className="auth-input"
+            value={email}
+            onChange={(e)=>setEmail(e.target.value)}
+          />
+        </div>
 
         <button
+          className="auth-button"
           onClick={handleEmail}
           disabled={loading}
-          style={styles.button}
+          style={{ marginBottom: '15px' }}
         >
-          {loading && mode==="email" ? "Sending..." : "Reset via Email"}
+          {loading && mode==="email" ? "Processing..." : "Reset via Email"}
         </button>
 
         <button
+          className="auth-button"
           onClick={handleOtp}
           disabled={loading}
-          style={styles.button}
+          style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.4)', color: 'white' }}
         >
-          {loading && mode==="otp" ? "Sending..." : "Reset via OTP"}
+          {loading && mode==="otp" ? "Processing..." : "Reset via OTP"}
         </button>
 
-        <p onClick={()=>navigate("/")} style={styles.back}>
-          ← Back to Login
+        <p onClick={()=>navigate("/")} className="auth-link" style={{ marginTop: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <span>←</span> Back to Login
         </p>
       </div>
     </div>
   );
 }
 
-export default ForgotPassword;
-
-const styles = {
-  container:{
-    height:"100vh",
-    display:"flex",
-    justifyContent:"center",
-    alignItems:"center",
-    background:"linear-gradient(to right, #232526, #414345)"
-  },
-  card:{
-    width:"350px",
-    padding:"25px",
-    background:"#fff",
-    borderRadius:"10px",
-    textAlign:"center"
-  },
-  input:{
-    width:"90%",
-    padding:"10px",
-    marginBottom:"10px"
-  },
-  button:{
-    width:"95%",
-    padding:"10px",
-    marginBottom:"10px",
-    background:"#ff416c",
-    color:"#fff",
-    border:"none",
-    cursor:"pointer"
-  },
-  back:{
-    color:"blue",
-    cursor:"pointer"
-  }
-};
+export default ForgotPassword;

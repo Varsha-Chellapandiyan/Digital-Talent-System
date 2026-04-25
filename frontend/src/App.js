@@ -1,11 +1,16 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useContext } from "react";
+
 import { ThemeContext } from "./context/ThemeContext";
+
 import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import OtpReset from "./pages/OtpReset";
 import ResetPassword from "./pages/ResetPassword";
+
 import PrivateRoute from "./components/PrivateRoute";
+import MainLayout from "./components/MainLayout";
+
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
@@ -13,36 +18,59 @@ import Settings from "./pages/Settings";
 function App() {
   const { darkMode } = useContext(ThemeContext);
 
-  const theme = darkMode ? dark : light;
-
   return (
-    <div style={{ background: theme.bg, minHeight: "100vh" }}>
+    <div className={darkMode ? "dark" : ""}>
       <BrowserRouter>
         <Routes>
 
+          {/* Public Routes */}
           <Route path="/" element={<Auth />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/otp" element={<OtpReset />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
+          {/* Protected Routes */}
           <Route
             path="/dashboard"
-            element={<PrivateRoute><Dashboard /></PrivateRoute>}
+            element={
+              <PrivateRoute>
+                <MainLayout title="Dashboard">
+                  <Dashboard />
+                </MainLayout>
+              </PrivateRoute>
+            }
           />
 
           <Route
             path="/tasks"
-            element={<PrivateRoute><Tasks /></PrivateRoute>}
+            element={
+              <PrivateRoute>
+                <MainLayout title="Task Management">
+                  <Tasks />
+                </MainLayout>
+              </PrivateRoute>
+            }
           />
 
           <Route
             path="/settings"
-            element={<PrivateRoute><Settings /></PrivateRoute>}
+            element={
+              <PrivateRoute>
+                <MainLayout title="Settings">
+                  <Settings />
+                </MainLayout>
+              </PrivateRoute>
+            }
           />
 
+          {/* Fallback Route */}
           <Route
             path="*"
-            element={<h2 style={{ padding: 20 }}>Page Not Found ❌</h2>}
+            element={
+              <h2 style={{ padding: 40, textAlign: "center" }}>
+                Page Not Found ❌
+              </h2>
+            }
           />
 
         </Routes>
@@ -52,11 +80,3 @@ function App() {
 }
 
 export default App;
-
-const light = {
-  bg: "#f8fafc"
-};
-
-const dark = {
-  bg: "#020617"
-};

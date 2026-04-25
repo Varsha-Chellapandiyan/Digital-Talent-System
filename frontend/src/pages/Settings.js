@@ -1,31 +1,24 @@
-import { useContext, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { ThemeContext } from "../context/ThemeContext";
-import toast, { Toaster } from "react-hot-toast";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { settingsStyles as styles } from "./styles";
+import { User, Shield, Image as ImageIcon, Trash2, Key, Mail, Phone, Briefcase, FileText, CheckCircle } from "./Icons";
 
 function Settings() {
-  const navigate = useNavigate();
-  const { darkMode, setDarkMode } = useContext(ThemeContext);
-
-  const [name, setName] = useState(localStorage.getItem("name") || "");
+  const [name, setName] = useState(localStorage.getItem("userName") || "");
   const [email, setEmail] = useState(localStorage.getItem("email") || "");
   const [phone, setPhone] = useState(localStorage.getItem("phone") || "");
   const [role, setRole] = useState(localStorage.getItem("role") || "");
   const [bio, setBio] = useState(localStorage.getItem("bio") || "");
-  const [profilePic, setProfilePic] = useState(
-    localStorage.getItem("profilePic") || ""
-  );
+  const [profilePic, setProfilePic] = useState(localStorage.getItem("profilePic") || "");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-const [showNewPassword, setShowNewPassword] = useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const theme = darkMode ? dark : light;
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onloadend = () => {
       setProfilePic(reader.result);
@@ -35,316 +28,115 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   };
 
   const handleProfileUpdate = () => {
-    if (!name || !email) {
-      return toast.error("Name & Email required ❌");
-    }
-
-    if (!email.includes("@")) {
-      return toast.error("Invalid email ❌");
-    }
-
-    if (phone && phone.length < 10) {
-      return toast.error("Invalid phone ❌");
-    }
-
-    localStorage.setItem("name", name);
+    if (!name || !email) return toast.error("Name & Email required ❌");
+    localStorage.setItem("userName", name);
     localStorage.setItem("email", email);
     localStorage.setItem("phone", phone);
     localStorage.setItem("role", role);
     localStorage.setItem("bio", bio);
-
     toast.success("Profile updated ✅");
   };
 
   const handlePasswordChange = () => {
-    if (!password || !confirmPassword) {
-      return toast.error("Fill all fields ❌");
-    }
-
-    if (password !== confirmPassword) {
-      return toast.error("Passwords do not match ❌");
-    }
-
+    if (!password || !confirmPassword) return toast.error("Fill all fields ❌");
+    if (password !== confirmPassword) return toast.error("Passwords do not match ❌");
     toast.success("Password updated ✅");
     setPassword("");
     setConfirmPassword("");
   };
 
-  const handleReset = () => {
-    localStorage.clear();
-    toast.success("Account reset ✅");
-    navigate("/");
-  };
-
   return (
-    <div style={{ ...styles.container, background: theme.bg, color: theme.text }}>
-      <Toaster />
+    <div style={styles.pageWrap}>
+      <div style={styles.contentGrid}>
+        
+        <div style={styles.card}>
+          <h2 style={styles.cardTitle}><User size={22} color="#8e2de2" /> Personal Profile</h2>
+          
+          <div style={styles.avatarSection}>
+            <div style={{position: 'relative'}}>
+                <img 
+                    src={profilePic || "https://img.icons8.com/bubbles/100/000000/user.png"} 
+                    alt="profile" 
+                    style={styles.avatar} 
+                />
+                <div style={{position: 'absolute', bottom: 5, right: 5, background: '#fff', borderRadius: '50%', padding: '5px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)'}}>
+                    <ImageIcon size={14} color="#8e2de2" />
+                </div>
+            </div>
+            <div style={styles.uploadBox}>
+              <label style={styles.uploadBtn}>
+                <span>Change Photo</span>
+                <input type="file" style={{ display: "none" }} onChange={handleImageUpload} />
+              </label>
+              <p style={styles.mutedText}>JPG, PNG or GIF. Max 1MB.</p>
+            </div>
+          </div>
 
-      <div style={{ ...styles.sidebar, background: theme.sidebar }}>
-        <h2>🚀 TaskPro</h2>
-
-        <div style={styles.menuBox}>
-          <NavLink to="/dashboard" style={({ isActive }) => linkStyle(isActive)}>📊 Dashboard</NavLink>
-          <NavLink to="/tasks" style={({ isActive }) => linkStyle(isActive)}>📝 Tasks</NavLink>
-          <NavLink to="/settings" style={({ isActive }) => linkStyle(isActive)}>⚙️ Settings</NavLink>
+          <div style={styles.formGrid}>
+            <div style={styles.field}>
+              <label style={styles.label}><User size={14} /> Full Name</label>
+              <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}><Mail size={14} /> Email Address</label>
+              <input style={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}><Phone size={14} /> Phone Number</label>
+              <input style={styles.input} placeholder="+91 ..." value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}><Briefcase size={14} /> Designation</label>
+              <input style={styles.input} value={role} onChange={(e) => setRole(e.target.value)} />
+            </div>
+            <div style={{ ...styles.field, gridColumn: "span 2" }}>
+              <label style={styles.label}><FileText size={14} /> Professional Bio</label>
+              <textarea style={{ ...styles.input, height: 100, borderRadius: '15px' }} value={bio} onChange={(e) => setBio(e.target.value)} />
+            </div>
+          </div>
+          <button style={styles.primaryBtn} onClick={handleProfileUpdate}>Update Details</button>
         </div>
 
-        <button style={styles.logout} onClick={() => {
-          localStorage.clear();
-          navigate("/");
-        }}>
-          Logout
-        </button>
-      </div>
+        <div style={styles.card}>
+          <h2 style={styles.cardTitle}><Shield size={22} color="#8e2de2" /> Account Security</h2>
+          <div style={styles.formGrid}>
+            <div style={styles.field}>
+              <label style={styles.label}><Key size={14} /> New Password</label>
+              <div style={styles.passwordWrapper}>
+                <input type={showNewPassword ? "text" : "password"} style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <button style={styles.eyeBtn} onClick={() => setShowNewPassword(!showNewPassword)}>
+                    {showNewPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}><CheckCircle size={14} /> Confirm Password</label>
+              <div style={styles.passwordWrapper}>
+                <input type={showConfirmPassword ? "text" : "password"} style={styles.input} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                <button style={styles.eyeBtn} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    {showConfirmPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
+          </div>
+          <button style={styles.primaryBtn} onClick={handlePasswordChange}>Change Password</button>
 
-      <div style={styles.main}>
-        <div style={styles.header}>
-          <h1>Settings</h1>
+          <hr style={styles.divider} />
 
-          <button style={styles.toggle} onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? "☀ Light" : "🌙 Dark"}
+          <h2 style={{ ...styles.cardTitle, color: "#ef4444" }}>⚠️ Danger Zone</h2>
+          <p style={styles.mutedText}>Resetting your account will clear all locally saved preferences and session data.</p>
+          <button style={styles.dangerBtn} onClick={() => { 
+                if(window.confirm("Are you sure? This will log you out.")) {
+                    localStorage.clear(); 
+                    window.location.href = "/";
+                }
+          }}>
+            <Trash2 size={16} /> Reset All Data
           </button>
         </div>
-
-        <div style={styles.card(theme)}>
-          <h2>👤 Profile</h2>
-
-          <div style={{ textAlign: "center" }}>
-            <img
-              src={profilePic || "https://via.placeholder.com/100"}
-              alt="profile"
-              style={styles.avatar}
-            />
-            <input type="file" onChange={handleImageUpload} />
-          </div>
-
-          <div style={styles.field}>
-            <label>Name</label>
-            <input style={styles.input(theme)} value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-
-          <div style={styles.field}>
-            <label>Email</label>
-            <input style={styles.input(theme)} value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-
-          <div style={styles.field}>
-            <label>Phone</label>
-            <input style={styles.input(theme)} value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </div>
-
-          <div style={styles.field}>
-            <label>Role</label>
-            <input style={styles.input(theme)} value={role} onChange={(e) => setRole(e.target.value)} />
-          </div>
-
-          <div style={styles.field}>
-            <label>Bio</label>
-            <textarea style={{ ...styles.input(theme), height: 80 }} value={bio} onChange={(e) => setBio(e.target.value)} />
-          </div>
-
-          <button style={styles.primaryBtn} onClick={handleProfileUpdate}>
-            Save Changes
-          </button>
-        </div>
-
-        <div style={styles.card(theme)}>
-          <h2>📊 Account Info</h2>
-          <p><b>Name:</b> {name}</p>
-          <p><b>Email:</b> {email}</p>
-          <p><b>Phone:</b> {phone || "Not set"}</p>
-          <p><b>Role:</b> {role || "Not set"}</p>
-        </div>
-
-        <div style={styles.card(theme)}>
-          <h2>🔒 Change Password</h2>
-
-          <div style={styles.field}>
-            <label>New Password</label>
-<div style={styles.passwordBox}>
-  <input
-    type={showNewPassword ? "text" : "password"}
-    style={styles.input(theme)}
-    value={password}
-    onChange={(e) => setPassword(e.target.value)}
-  />
-
-  <button
-    style={styles.eyeBtn}
-    onClick={() => setShowNewPassword(!showNewPassword)}
-  >
-    {showNewPassword ? "🙈" : "👁"}
-       </button>
-      </div>          </div>
-
-          <div style={styles.field}>
-            <label>Confirm Password</label>
-<div style={styles.passwordBox}>
-  <input
-    type={showConfirmPassword ? "text" : "password"}
-    style={styles.input(theme)}
-    value={confirmPassword}
-    onChange={(e) => setConfirmPassword(e.target.value)}
-  />
-
-  <button
-    style={styles.eyeBtn}
-    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-  >
-    {showConfirmPassword ? "🙈" : "👁"}
-  </button>
-</div>          </div>
-
-          <button style={styles.primaryBtn} onClick={handlePasswordChange}>
-            Update Password
-          </button>
-        </div>
-
-        <button style={styles.dangerBtn} onClick={handleReset}>
-          Reset Account
-        </button>
-
       </div>
     </div>
   );
 }
 
 export default Settings;
-
-
-const light = {
-  bg: "#f8fafc",
-  text: "#000",
-  sidebar: "#0f172a",
-  card: "#fff",
-  input: "#fff"
-};
-
-const dark = {
-  bg: "#020617",
-  text: "#fff",
-  sidebar: "#020617",
-  card: "#0f172a",
-  input: "#020617"
-};
-
-
-const styles = {
-  container: { display: "flex", height: "100vh" },
-
-  sidebar: {
-    width: 240,
-    color: "#fff",
-    padding: 20,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between"
-  },
-
-  menuBox: { display: "flex", flexDirection: "column", gap: 12 },
-
-  logout: {
-    background: "red",
-    color: "#fff",
-    border: "none",
-    padding: 10,
-    borderRadius: 6,
-    cursor: "pointer"
-  },
-
-  main: { flex: 1, padding: 30, overflowY: "auto" },
-
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-
-  toggle: {
-    padding: "8px 16px",
-    borderRadius: 6,
-    border: "none",
-    cursor: "pointer",
-    background: "#000000",
-    color: "#fff",
-    fontWeight: "bold"
-  },
-
-  card: (theme) => ({
-    marginTop: 20,
-    padding: 20,
-    borderRadius: 12,
-    background: theme.card,
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-    maxWidth: 420
-  }),
-
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 5
-  },
-
-  input: (theme) => ({
-    padding: 8,
-    borderRadius: 6,
-    border: "1px solid #ccc",
-    background: theme.input,
-    color: theme.text
-  }),
-
-  primaryBtn: {
-    background: "#2563eb",
-    color: "#fff",
-    border: "none",
-    padding: 10,
-    borderRadius: 6,
-    cursor: "pointer"
-  },
-
-  dangerBtn: {
-    marginTop: 20,
-    background: "#ef4444",
-    color: "#fff",
-    border: "none",
-    padding: 12,
-    borderRadius: 6,
-    cursor: "pointer",
-    maxWidth: 200
-  },
-
-  passwordBox: {
-  display: "flex",
-  alignItems: "center",
-  gap: 8
-},
-
-eyeBtn: {
-  border: "none",
-  background: "#2563eb",
-  color: "#fff",
-  padding: "6px 10px",
-  borderRadius: 6,
-  cursor: "pointer",
-  fontSize: 12
-},
-
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: "50%",
-    objectFit: "cover",
-    marginBottom: 10
-  }
-};
-
-
-const linkStyle = (isActive) => ({
-  color: isActive ? "#fff" : "#94a3b8",
-  background: isActive ? "#2563eb" : "transparent",
-  padding: 8,
-  borderRadius: 6,
-  textDecoration: "none"
-});
